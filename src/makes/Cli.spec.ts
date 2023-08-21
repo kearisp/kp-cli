@@ -1,19 +1,11 @@
-import * as fs from "fs";
-import * as Path from "path";
 import * as assert from "assert";
+import {expect, describe, it} from "@jest/globals";
 
 import {Cli} from "./Cli";
 import {Logger} from "./Logger";
 
 
-const cli = new Cli();
-
-fs.writeFile(Path.join(__dirname, "../..", "s.sh"), cli.completionScript(), () => {
-    //
-});
-
-// fs.createWriteStream();
-// fs.write(cli.completionScript());
+const cli = new Cli(Logger);
 
 cli.command("init")
     .option("name", {
@@ -41,7 +33,11 @@ cli.command("test:<command>")
     })
     .completion("command", () => ["command"])
     .action((options, command: string) => {
-        return "";
+        const {
+            name = ""
+        } = options;
+
+        return `${command}:${name}`;
     });
 
 cli.command("test [action]")
@@ -73,6 +69,11 @@ cli.command("exec")
     .command("mysql [database]")
     .completion("database", () => ["foo", "bar"])
     .action((options, database?: string) => {
+        return "";
+    });
+
+cli.command("config:set [...configs]")
+    .action((options, configs: string[]) => {
         return "";
     });
 
@@ -120,6 +121,19 @@ describe("Cli.parse", () => {
             parts: []
         });
     });
+
+    it("config:set [...configs]", () => {
+        const res = cli.command("config:set [...configs]")
+            .parse(["config:set", "KEY=value", "KEY2=value2"]);
+
+        assert.deepStrictEqual(res, {
+            args: [
+                ["KEY=value", "KEY2=value2"]
+            ],
+            options: {},
+            parts: []
+        });
+    });
 });
 
 describe("Cli.process", () => {
@@ -150,7 +164,7 @@ describe("Cli.process", () => {
     it("test:action", async () => {
         const res = await cli.process(["test:action", "-n", "project"]);
 
-        expect("").toBe("");
+        expect(res).toBe("action:project");
     });
 
     // it("ws exec -d mysql test", async () => {
@@ -158,7 +172,7 @@ describe("Cli.process", () => {
     //
     //     expect("").toBe("");
     // });
-    //
+
     // it("ws", async () => {
     //     const res = await cli.process(["init", "-n", "test"]);
     //
@@ -170,25 +184,18 @@ describe("Cli.complete", () => {
     it("i", async () => {
         const res = await cli.complete(["i"]);
 
-        Logger.warning("(i)", res);
-
-        expect("").toBe("");
+        assert.deepStrictEqual(res, ["init"]);
     });
 
     it("test", async () => {
         const res = await cli.complete(["test", ""]);
 
-        Logger.warning("(test)", res);
-
-        expect("").toBe("");
-        // expect(res).toBe
+        assert.deepStrictEqual(res, ["foo", "bar"]);
     });
 
-    it("ws test:", async () => {
-        const res = await cli.complete(["ws", "test:"]);
+    it("test:", async () => {
+        const res = await cli.complete(["test:"]);
 
-        Logger.warning("(ws test:)", res);
-
-        expect("").toBe("");
+        assert.deepStrictEqual(res, ["test:command"]);
     });
 });

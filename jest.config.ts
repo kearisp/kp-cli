@@ -5,7 +5,6 @@
  */
 
 import type {Config} from "@jest/types";
-
 import * as Dotenv from "dotenv";
 
 
