@@ -1,12 +1,25 @@
 {
-    "name": "@kp/cli",
+    "name": "@kearisp/cli",
     "version": "1.0.0",
-    "description": "",
-    "author": "Kris Papercut <krispcut@gmail.com>",
     "license": "MIT",
-    "main": "index.js",
+    "author": "Kris Papercut <krispcut@gmail.com>",
+    "description": "Command line interface for node.js",
+    "keywords": [
+        "cli",
+        "parser"
+    ],
+    "private": false,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kearisp/kp-cli.git"
+    },
+    "homepage": "https://github.com/kearisp/kp-cli/blob/master/README.md",
     "scripts": {
+        "prepare": "npm run build",
         "watch": "tsc --watch",
+        "build": "tsc",
         "babel:build": "babel src --out-dir lib --extensions .js --extensions .ts",
         "babel:watch": "npm run babel:build -- --watch",
         "test": "jest --colors",
@@ -25,6 +38,7 @@
         "dotenv": "^16.3.1",
         "fs": "^0.0.1-security",
         "jest": "^29.6.1",
+        "omelette": "^0.4.17",
         "path": "^0.12.7",
         "ts-node": "^10.9.1",
         "typescript": "^5.1.6"

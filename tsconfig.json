@@ -10,8 +10,7 @@
         "outDir": "./dist/",
         "baseUrl": "./",
         "incremental": true,
-        "skipLibCheck": true,
-        "types": ["node"]
+        "skipLibCheck": true
     },
     "include": ["./src/**/*"],
     "exclude": ["**/*.spec.ts"]
