@@ -7,6 +7,11 @@ import {
 } from "../utils";
 
 
+type HelpParams = false | {
+    disabled?: boolean;
+    description?: string;
+};
+
 type Option = {
     name: string;
     type: "string" | "boolean" | "number";
@@ -34,6 +39,8 @@ const regShortMultipleOption = /^-(\w+)$/;
 
 class Command {
     protected _command: string;
+    protected _help: boolean;
+    protected _description: string;
     protected _commands: Command[] = [];
     protected _options: Option[] = [];
     protected _action: Action;
@@ -78,6 +85,28 @@ class Command {
                 : defaultValue,
             ...rest
         });
+
+        return this;
+    }
+
+    public help(params: HelpParams) {
+        const {
+            disabled= false,
+            description = ""
+        } = typeof params === "boolean" ? {
+            disabled: params,
+        } : params;
+
+        this._help = !disabled;
+        this._description = description;
+
+        if(this._help) {
+            this.option("help", {
+                type: "boolean",
+                alias: "h",
+                description: "Help"
+            });
+        }
 
         return this;
     }
@@ -168,7 +197,7 @@ class Command {
                     });
 
                     if(!option) {
-                        throw new Error(`Option "${name}" is not defined (1)`);
+                        throw new Error(`Option "${name || alias}" is not defined (1)`);
                     }
 
                     switch(option.type) {
@@ -263,24 +292,36 @@ class Command {
 
         const {
             args,
-            options,
             parts: childParts
         } = res;
 
+        const options = {
+            ...parentOptions,
+            ...res.options
+        };
+
         if(this._action) {
-            return this._action({
-                ...parentOptions,
-                ...options
-            }, ...parentArgs, ...args);
+            if(this._help && options.help) {
+                const optionsDescription = this._options.map((option) => {
+                    const {
+                        alias,
+                        name,
+                        description = ""
+                    } = option;
+
+                    const aliasDescription = alias ? `, -${alias}` : "";
+
+                    return ` --${name}${aliasDescription} - ${description}`;
+                }).join("\n");
+
+                return `Help:\n ${this._description || ""}\n\n${optionsDescription}\n`;
+            }
+
+            return this._action(options, ...parentArgs, ...args);
         }
 
-        // Logger.info(res);
-
         for(const command of this._commands) {
-            const res = await command.process(childParts, {
-                ...parentOptions,
-                ...options
-            }, [
+            const res = await command.process(childParts, options, [
                 ...parentArgs,
                 ...args
             ]);

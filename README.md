@@ -39,10 +39,23 @@ cli.run(process.argv).then((res) => {
 
 `[bar]` - not required argument
 
+> ℹ️ The spread is not stable now
+
+`<...bars>` - required spread argument
+
+`[...bars]` - not required spread argument
+
 ```typescript
-cli.command("foo <bar1> [bar2]")
-    .action((options, bar1: string, bar2?: string) => {
-        return `Foo result, with arguments bar1=${bar1} bar2=${bar2}`;
+cli.command("foo <foo1> [foo2]")
+    .action((options, foo1: string, foo2?: string) => {
+        return `Foo result, with arguments foo1=${foo1} foo2=${foo2}`;
+    });
+```
+
+```typescript
+cli.command("bar [...bars]")
+    .action((options, bars: string[]) => {
+        return "Bar result, Bars: " + bars.join(", ");
     });
 ```
 
@@ -73,6 +86,39 @@ cli.command("foo")
         return `Foo result, with options bar=${bar} init=${init.toString()}`;
     });
 ```
+
+### Help
+
+```typescript
+cli.command("foo")
+    .help({
+        description: "Foo description"
+    })
+    .option("option", {
+        alias: "o",
+        description: "Option description"
+    })
+    .action((options) => {
+        const {
+            option = ""
+        } = options;
+
+        return `option=${option}`;
+    });
+```
+
+```shell
+./cli.js foo -h
+```
+
+> Response:
+> ```text
+> Help:
+> Foo description
+> 
+> --option, -o - Option description
+> ```
+
 
 ### Completion
 
