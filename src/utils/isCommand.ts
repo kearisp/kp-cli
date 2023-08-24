@@ -1,3 +1,7 @@
-export const isCommand = (part: string) => {
-    return !part.startsWith("-");
+import {generateCommandRegExp} from "./generateCommandRegExp";
+
+
+export const isCommand = (command: string) => {
+    // return !part.startsWith("-");
+    return !!generateCommandRegExp(command);
 };

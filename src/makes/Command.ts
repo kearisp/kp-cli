@@ -1,8 +1,9 @@
-import {Logger} from "./Logger";
+import {Logger} from "../types";
 import {
     escapeRegExp,
     generateCommandRegExp,
-    isCommand
+    isCommand,
+    isSpread
 } from "../utils";
 
 
@@ -21,10 +22,10 @@ type OptionParams = Omit<Option, "name" | "type"> & {
 type Completion = {
     name: string;
     isOption?: boolean;
-    action: (options: any, ...args: string[]) => string[] | Promise<string[]>;
+    action: (options: any, ...args: (string | string[])[]) => string[] | Promise<string[]>;
 };
 
-type Action = (options: any, ...args: string[]) => string | Promise<string>;
+type Action = (options: any, ...args: (string | string[])[]) => void | string | Promise<void | string>;
 
 const regOption = /^-(?:-(\w[\w\d_-]*)|(\w))$/;
 const regOptionWithValue = /^-(?:-(\w[\w\d_-]*)|(\w))=(.*)$/;
@@ -37,9 +38,11 @@ class Command {
     protected _options: Option[] = [];
     protected _action: Action;
     protected _completions: Completion[] = [];
+    protected _logger?: Logger;
 
-    public constructor(command: string) {
+    public constructor(command: string, logger?: Logger) {
         this._command = command;
+        this._logger = logger;
     }
 
     public getName() {
@@ -52,7 +55,7 @@ class Command {
         });
 
         if(!command) {
-            command = new Command(name);
+            command = new Command(name, this._logger);
 
             this._commands.push(command);
         }
@@ -93,13 +96,11 @@ class Command {
     }
 
     public parse(parts: string[], partial = false) {
-        // Logger.log("Command.parse(", parts, ")");
-
         const commands = this._command
             ? this._command.split(/\s+/g)
             : [];
 
-        const args: string[] = [];
+        const args: (string | string[])[] = [];
         const options: {
             [name: string]: string | boolean | number;
         } = {};
@@ -110,11 +111,18 @@ class Command {
             let part = parts[current] || "";
             let isLast = current === parts.length - 1;
 
-            // if(isLast) {
-            //     Logger.log("isLast:", `"${part}"`);
-            // }
+            if(isSpread(command)) {
+                let value: string[] = [];
 
-            if(isCommand(part)) {
+                while(current < parts.length) {
+                    value.push(parts[current]);
+
+                    current++;
+                }
+
+                args.push(value);
+            }
+            else if(isCommand(command)) {
                 const regExp = generateCommandRegExp(command);
 
                 if(!regExp) {
@@ -124,7 +132,7 @@ class Command {
                 if(partial && isLast) {
                     const partExp = generateCommandRegExp(command, true)
 
-                    // Logger.warning(">", partExp.toString(), part, partExp.exec(part));
+                    // this.warning(">", partExp.toString(), part, partExp.exec(part));
 
                     if(partExp.test(part)) {
                         return {
@@ -142,7 +150,6 @@ class Command {
 
                 const [, ...match] = regExp.exec(part) || [];
 
-                // Logger.info(regExp.toString(), match);
                 args.push(...match);
 
                 current++;
@@ -157,11 +164,11 @@ class Command {
                     const [, name, alias] = regOption.exec(part) || [];
 
                     const option = this._options.find((option) => {
-                        return option.name === name || option.alias === alias;
+                        return (name && option.name === name) || (alias && option.alias === alias);
                     });
 
                     if(!option) {
-                        throw new Error(`Option "${name}" is not defined`);
+                        throw new Error(`Option "${name}" is not defined (1)`);
                     }
 
                     switch(option.type) {
@@ -196,7 +203,7 @@ class Command {
                     });
 
                     if(!option) {
-                        throw new Error(`Option not found ${name || alias}`);
+                        throw new Error(`Option not found ${name || alias} (2)`);
                     }
 
                     switch(option.type) {
@@ -247,7 +254,7 @@ class Command {
         };
     }
 
-    public async process(parts: string[], parentOptions: any = {}, parentArgs: string[] = []) {
+    public async process(parts: string[], parentOptions: any = {}, parentArgs: (string | string[])[] = []) {
         const res = this.parse(parts);
 
         if(!res) {
@@ -286,7 +293,7 @@ class Command {
         return null;
     }
 
-    public async predictCommand(command: string, part: string, options: any = {}, args: string[] = []) {
+    public async predictCommand(command: string, part: string, options: any = {}, args: (string | string[])[] = []) {
         // Logger.log("predictCommand(", command, part, options, args, ")");
 
         const comAttrReq = /^<([\w_-]+)>(.*)?$/;
@@ -380,8 +387,6 @@ class Command {
 
     public async complete(parts: string[]) {
         const res = this.parse(parts, true);
-
-        // Logger.log("Command.complete(", parts, ") ->", res);
 
         if(!res) {
             return null;
@@ -484,6 +489,30 @@ class Command {
         }
 
         return new RegExp(`^(?:${partial ? partialRes : res})$`);
+    }
+
+    public info(...args: any[]) {
+        if(!this._logger) {
+            return;
+        }
+
+        this._logger.info(...args);
+    }
+
+    public warning(...args: any[]) {
+        if(!this._logger) {
+            return;
+        }
+
+        this._logger.warning(...args);
+    }
+
+    public error(...args: any[]) {
+        if(!this._logger) {
+            return;
+        }
+
+        this._logger.error(...args);
     }
 }
 
