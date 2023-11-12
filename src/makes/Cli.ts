@@ -86,12 +86,6 @@ class Cli extends Command {
                         type: "boolean"
                     })
                     .action((options, index: string, prev: string, command: string) => {
-                        this.info(parts, options, {
-                            index,
-                            prev,
-                            command
-                        });
-
                         resolve([index, command]);
 
                         return "1";
@@ -107,8 +101,6 @@ class Cli extends Command {
                     const p = this.parseCommand(command);
 
                     const res = await this.complete(p.length - 1 < parseInt(index) ? [...p, ""] : p);
-
-                    this.info(index, p.length, p, res);
 
                     return res
                         .map((predict) => {

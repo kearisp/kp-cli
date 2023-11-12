@@ -2,10 +2,9 @@ import * as assert from "assert";
 import {expect, describe, it} from "@jest/globals";
 
 import {Cli} from "./Cli";
-import {Logger} from "./Logger";
 
 
-const cli = new Cli(Logger);
+const cli = new Cli();
 
 cli.command("init")
     .option("name", {

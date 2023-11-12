@@ -1,20 +1,23 @@
 {
     "name": "@kearisp/cli",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "license": "MIT",
     "author": "Kris Papercut <krispcut@gmail.com>",
     "description": "Command line interface for node.js",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "keywords": [
         "cli",
         "parser"
     ],
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "homepage": "https://github.com/kearisp/kp-cli#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/kearisp/kp-cli.git"
     },
-    "homepage": "https://github.com/kearisp/kp-cli/blob/master/README.md",
+    "bugs": {
+        "url": "https://github.com/kearisp/kp-cli/issues"
+    },
     "scripts": {
         "prepare": "npm run build",
         "watch": "tsc --watch",
@@ -30,10 +33,10 @@
         "@babel/preset-env": "^7.22.10",
         "@babel/preset-typescript": "^7.22.5",
         "@types/jest": "^29.5.3",
-        "@types/node": "^20.5.1",
-        "babel-jest": "^29.6.2",
+        "@types/node": "^20.9.1",
+        "babel-jest": "^29.7.0",
         "dotenv": "^16.3.1",
-        "jest": "^29.6.3",
+        "jest": "^29.7.0",
         "path": "^0.12.7",
         "typescript": "^5.1.6"
     }
