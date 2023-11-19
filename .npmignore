@@ -1,7 +1,28 @@
-/node_modules
+# Misc
+.idea/
+.vscode/
+/.eslintcache
+.DS_Store
+
+# Source code
 /src
-package-lock.json
-tsconfig.json
-tsconfig.build.json
-.babelrc.js
-.env
+
+# Builds
+/lib/tsconfig.tsbuildinfo
+
+# Build configs
+/.env
+/package-lock.json
+/tsconfig.json
+/tsconfig.build.json
+/.babelrc.js
+/jest.config.ts
+
+# Dependency directories
+/node_modules
+jspm_packages/
+/.pnp
+.pnp.js
+
+# Development tools
+/.github

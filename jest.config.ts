@@ -5,10 +5,7 @@
  */
 
 import type {Config} from "@jest/types";
-import * as Dotenv from "dotenv";
 
-
-Dotenv.config();
 
 const config: Config.InitialOptionsWithRootDir = {
     // All imported modules in your tests should be mocked automatically
@@ -103,7 +100,7 @@ const config: Config.InitialOptionsWithRootDir = {
     // notifyMode: "failure-change",
 
     // A preset that is used as a base for Jest's configuration
-    // preset: "ts-jest",
+    preset: "ts-jest",
 
     // Run tests from one or more projects
     // projects: undefined,
@@ -141,9 +138,9 @@ const config: Config.InitialOptionsWithRootDir = {
     //     "<rootDir>/test/index.ts"
     // ],
 
-    transform: {
-        "^.+\\.(t|j)s$": "babel-jest"
-    },
+    // transform: {
+    //     "^.+\\.(t|j)s$": "babel-jest"
+    // },
     moduleNameMapper: {
         "^src/(.*)": "<rootDir>/src/$1"
     },

@@ -144,6 +144,19 @@ class Command {
                 let value: string[] = [];
 
                 while(current < parts.length) {
+                    isLast = current === parts.length - 1;
+
+                    if(partial && isLast) {
+                        args.push(value);
+
+                        return {
+                            args,
+                            options,
+                            command,
+                            part: parts[current]
+                        };
+                    }
+
                     value.push(parts[current]);
 
                     current++;
@@ -335,11 +348,12 @@ class Command {
     }
 
     public async predictCommand(command: string, part: string, options: any = {}, args: (string | string[])[] = []) {
-        // Logger.log("predictCommand(", command, part, options, args, ")");
+        // this.log("predictCommand(", command, ",", part, ",", options, ",", args, ")");
 
         const comAttrReq = /^<([\w_-]+)>(.*)?$/;
         const comAttrOpt = /^\[([\w_-]+)](.*)?$/;
-        const comSpread = /^\[\.\.\.([0-9\w_-]+)](.*)$/;
+        const comSpread = /^\[\.\.\.([0-9\w_-]+)](.*)?$/;
+        const comSpreadReq = /^<\.\.\.([0-9\w_-]+)>(.*)?$/;
         const comOther = /^([^\[\]<>{}]+)(.*)$/;
 
         let exitCount = 0;
@@ -347,13 +361,10 @@ class Command {
         let restCommand = command;
         let isAction = false;
         let predict = "";
-        let predicts = [];
         let resPredicts = [""];
 
         while(restCommand) {
-            let stepReg;
-
-            // Logger.log("restCommand:", restCommand);
+            let stepReg: string;
 
             if(comAttrReq.test(restCommand)) {
                 const [, name, rest] = comAttrReq.exec(restCommand);
@@ -371,6 +382,22 @@ class Command {
                 restCommand = rest;
                 stepReg = "(.+?)?";
             }
+            else if(comSpread.test(restCommand)) {
+                const [, match, rest] = comSpread.exec(restCommand) || [];
+
+                isAction = true;
+                predict = match;
+                restCommand = rest;
+                stepReg = "(.+?)?";
+            }
+            else if(comSpreadReq.test(restCommand)) {
+                const [, match, rest] = comSpreadReq.exec(restCommand) || [];
+
+                isAction = true;
+                predict = match;
+                restCommand = rest;
+                stepReg = "(.+?)";
+            }
             else if(comOther.test(restCommand)) {
                 const [, match, rest] = comOther.exec(restCommand) || [];
 
@@ -383,6 +410,10 @@ class Command {
             exitCount++;
 
             if(exitCount > 100) {
+                this.warning("Emergency exit", {
+                    restCommand
+                });
+
                 return null;
             }
 
@@ -421,7 +452,7 @@ class Command {
             }
         }
 
-        // Logger.info(`^${reg}$`, isAction, predict, resPredicts);
+        // this.info("res: ", `^${reg}$`, isAction, predict, resPredicts);
 
         return resPredicts;
     }
@@ -458,81 +489,15 @@ class Command {
         return predicts;
     }
 
-    public isMatch(part: string) {
-        const regExp = this.getReg();
-
-        return regExp.test(part);
-    }
-
-    public getRegExp(part: string, partial = false) {
-        const comAttrReq = /^<([\w_-]+)>(.*)?$/;
-        const comAttrOpt = /^\[([\w_-]+)](.*)?$/;
-
-        let restCommand = part;
-
-        while(restCommand) {
-            let stepReg;
-
-            if(comAttrOpt.test(restCommand)) {
-
-            }
-            else {
-                // return
-            }
-        }
-    }
-
-    public getReg(partial = false) {
-        const comAttrReq = /^<([\w_-]+)>(.*)?$/;
-        const comAttrOpt = /^\[([\w_-]+)](.*)?$/;
-        const comSpread = /^\[\.\.\.([0-9\w_-]+)](.*)$/;
-        const comOther = /^([^[\]<>{}])(.*)$/;
-
-        let exitCount = 0;
-
-        let restCommand = this._command;
-        let res = "";
-        let partialRes = "";
-
-        while(restCommand) {
-            let stepReg;
-
-            if(comAttrReq.test(restCommand)) {
-                const [, name, rest] = comAttrReq.exec(restCommand) || [];
-
-                restCommand = rest;
-                stepReg = partial ? `(?:.+?)` : `(.+?)`;
-            }
-            else if(comAttrOpt.test(restCommand)) {
-                const [, name, rest] = comAttrReq.exec(restCommand) || [];
-
-                restCommand = rest;
-                stepReg = partial ? `(?:.+?)?` : `(.+?)?`;
-            }
-            else if(comOther.test(restCommand)) {
-                const [, match, rest] = comOther.exec(restCommand) || [];
-
-                restCommand = rest;
-                stepReg = `${escapeRegExp(match)}`;
-            }
-            else {
-                return null;
-            }
-
-            if(stepReg) {
-                res += stepReg;
-                partialRes = `${res}${"|" + partialRes}`;
-            }
-
-            if(exitCount++ > 1000) {
-                break;
-            }
+    protected log(...args: any[]) {
+        if(!this._logger) {
+            return;
         }
 
-        return new RegExp(`^(?:${partial ? partialRes : res})$`);
+        this._logger.log(...args);
     }
 
-    public info(...args: any[]) {
+    protected info(...args: any[]) {
         if(!this._logger) {
             return;
         }
@@ -540,7 +505,7 @@ class Command {
         this._logger.info(...args);
     }
 
-    public warning(...args: any[]) {
+    protected warning(...args: any[]) {
         if(!this._logger) {
             return;
         }
@@ -548,7 +513,7 @@ class Command {
         this._logger.warning(...args);
     }
 
-    public error(...args: any[]) {
+    protected error(...args: any[]) {
         if(!this._logger) {
             return;
         }

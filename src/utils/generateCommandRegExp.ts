@@ -1,15 +1,15 @@
 import {escapeRegExp} from "./escapeRegExp";
 
 
+const comAttrReq = /^<([\w_-]+)>(.*)?$/;
+const comAttrOpt = /^\[([\w_-]+)](.*)?$/;
+const comSpread = /^\[\.\.\.([0-9\w_-]+)](.*)$/;
+const comOther = /^([^[\]<>{}])(.*)$/;
+
 export const generateCommandRegExp = (part: string, partial = false) => {
     // const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     if(partial) {
-        const comAttrReq = /^<([\w_-]+)>(.*)?$/;
-        const comAttrOpt = /^\[([\w_-]+)](.*)?$/;
-        const comSpread = /^\[\.\.\.([0-9\w_-]+)](.*)$/;
-        const comOther = /^([^[\]<>{}])(.*)$/;
-
         let exitCount = 0;
         let restCommand = part;
         let res = "";

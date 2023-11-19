@@ -76,6 +76,14 @@ cli.command("config:set [...configs]")
         return "";
     });
 
+cli.command("domain:add <...domain>")
+    .completion("domain", () => {
+        return ["foo.ws", "test.ws", "test-2.ws"];
+    })
+    .option("bool", {
+        type: "boolean"
+    });
+
 describe("Cli.parse", () => {
     it("init", () => {
         const res = cli.command("init").parse(["init"]);
@@ -130,6 +138,26 @@ describe("Cli.parse", () => {
                 ["KEY=value", "KEY2=value2"]
             ],
             options: {},
+            parts: []
+        });
+    });
+
+    it("domain:add <...domain>", () => {
+        const command = cli.command("domain:add <...domain>");
+
+        assert.deepEqual(command.parse(["domain:add", "test.ws", "test-2.ws"]), {
+            args: [["test.ws", "test-2.ws"]],
+            options: {},
+            parts: []
+        });
+
+        const res2 = command.parse(["domain:add", "--bool", "test.ws"]);
+
+        assert.deepEqual(res2, {
+            args: [["test.ws"]],
+            options: {
+                bool: true
+            },
             parts: []
         });
     });
@@ -196,5 +224,11 @@ describe("Cli.complete", () => {
         const res = await cli.complete(["test:"]);
 
         assert.deepStrictEqual(res, ["test:command"]);
+    });
+
+    it("domain:add <..domains>", async () => {
+        const res = await cli.complete(["domain:add", "test"]);
+
+        assert.deepEqual(res, ["foo.ws", "test.ws", "test-2.ws"]);
     });
 });
