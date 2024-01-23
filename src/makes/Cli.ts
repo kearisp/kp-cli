@@ -1,8 +1,8 @@
 import * as OS from "os";
+import * as Path from "path";
 
-import {Command} from "./Command";
 import {Logger} from "../types";
-
+import {Command} from "./Command";
 import {generateCompletion} from "../utils";
 
 
@@ -64,15 +64,13 @@ class Cli extends Command {
     public async run(argv: string[]) {
         const [, scriptPath, ...rest] = argv;
 
-        this.scriptPath = scriptPath
+        this.scriptPath = scriptPath;
+        this._command = Path.basename(scriptPath);
 
-        const [, name] = /^.+\/(.+)$/.exec(scriptPath) || [];
-
-        const parts = [name, ...rest];
-        this._command = name;
+        const parts = [this._command, ...rest];
 
         if(parts.indexOf("--completion") > -1 || parts.indexOf("--compbash") > -1 || parts.indexOf("--compgen") > -1) {
-            const completion = new Command(`${name} <index> <prev> <command>`, this._logger);
+            const completion = new Command(`${this._command} <index> <prev> <command>`, this._logger);
 
             const promise = new Promise<[string, string]>((resolve) => {
                 completion
@@ -120,7 +118,13 @@ class Cli extends Command {
             return "";
         }
 
-        return this.process(parts);
+        const res = await this.process(parts);
+
+        if(res === null) {
+            throw new Error("Command not found");
+        }
+
+        return res;
     }
 }
 
