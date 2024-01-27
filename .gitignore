@@ -8,7 +8,7 @@
 /.env
 
 # Builds
-/dist
+/lib
 
 # Dependency directories
 /node_modules

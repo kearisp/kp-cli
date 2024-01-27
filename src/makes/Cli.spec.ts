@@ -16,15 +16,6 @@ cli.command("init")
         return "init";
     });
 
-// cli.command("start")
-//     .option("name", {
-//         type: "string",
-//         alias: "n"
-//     })
-//     .action((options) => {
-//         return "";
-//     });
-
 cli.command("test:<command>")
     .option("name", {
         type: "string",
@@ -68,12 +59,12 @@ cli.command("exec")
     .command("mysql [database]")
     .completion("database", () => ["foo", "bar"])
     .action((options, database?: string) => {
-        return "";
+        return database || "";
     });
 
 cli.command("config:set [...configs]")
-    .action((options, configs: string[]) => {
-        return "";
+    .action((options, configs) => {
+        return (configs as string[]).join(",");
     });
 
 cli.command("domain:add <...domain>")
@@ -82,6 +73,9 @@ cli.command("domain:add <...domain>")
     })
     .option("bool", {
         type: "boolean"
+    })
+    .action((options, domains) => {
+        return (domains as string[]).join(",");
     });
 
 describe("Cli.parse", () => {
@@ -194,6 +188,14 @@ describe("Cli.process", () => {
         expect(res).toBe("action:project");
     });
 
+    it("missed", async () => {
+        const res = await cli.process(["missed"]);
+
+        console.log(res);
+
+        expect("").toBe("");
+    });
+
     // it("ws exec -d mysql test", async () => {
     //     const res = await cli.process(["ws", "exec", "-d", "mysql", "test"]);
     //
@@ -230,5 +232,67 @@ describe("Cli.complete", () => {
         const res = await cli.complete(["domain:add", "test"]);
 
         assert.deepEqual(res, ["foo.ws", "test.ws", "test-2.ws"]);
+    });
+});
+
+describe("Cli.run", () => {
+    const run = async (args: string[]) => {
+        try {
+            const res = await cli.run(args);
+
+            return [res, null];
+        }
+        catch(err) {
+            return [null, err];
+        }
+    };
+
+    it("init", async () => {
+        const [res, err] = await run([
+            "/bin/node",
+            "/bin/command",
+            "init"
+        ]);
+
+        expect(res).toBe("init");
+        expect(err).toBeNull();
+    });
+
+    it("not-found", async () => {
+        const [res, err] = await run([
+            "/bin/node",
+            "/bin/command",
+            "not-found"
+        ]);
+
+        expect(res).toBeNull();
+        expect(err).toBeDefined();
+        expect(err).toBeInstanceOf(Error);
+    });
+
+    it("config:set [...configs]", async () => {
+        const [res, err] = await run([
+            "/bin/node",
+            "/bin/command",
+            "config:set",
+            "TEST=1",
+            "TEST=2"
+        ]);
+
+        expect(res).toBe("TEST=1,TEST=2");
+        expect(err).toBeNull();
+    });
+
+    it("domain:add <...domains>", async () => {
+        const [res, err] = await run([
+            "/bin/node",
+            "/bin/command",
+            "domain:add",
+            "foo",
+            "bar"
+        ]);
+
+        expect(res).toBe("foo,bar");
+        expect(err).toBeNull();
     });
 });

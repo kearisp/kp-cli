@@ -330,7 +330,7 @@ class Command {
                 return `Help:\n ${this._description || ""}\n\n${optionsDescription}\n`;
             }
 
-            return this._action(options, ...parentArgs, ...args);
+            return (await this._action(options, ...parentArgs, ...args)) || "";
         }
 
         for(const command of this._commands) {
@@ -339,7 +339,7 @@ class Command {
                 ...args
             ]);
 
-            if(res) {
+            if(res !== null) {
                 return res;
             }
         }
@@ -348,8 +348,6 @@ class Command {
     }
 
     public async predictCommand(command: string, part: string, options: any = {}, args: (string | string[])[] = []) {
-        // this.log("predictCommand(", command, ",", part, ",", options, ",", args, ")");
-
         const comAttrReq = /^<([\w_-]+)>(.*)?$/;
         const comAttrOpt = /^\[([\w_-]+)](.*)?$/;
         const comSpread = /^\[\.\.\.([0-9\w_-]+)](.*)?$/;
@@ -410,7 +408,7 @@ class Command {
             exitCount++;
 
             if(exitCount > 100) {
-                this.warning("Emergency exit", {
+                this.warn("Emergency exit", {
                     restCommand
                 });
 
@@ -451,8 +449,6 @@ class Command {
                 reg = nextReg;
             }
         }
-
-        // this.info("res: ", `^${reg}$`, isAction, predict, resPredicts);
 
         return resPredicts;
     }
@@ -505,12 +501,12 @@ class Command {
         this._logger.info(...args);
     }
 
-    protected warning(...args: any[]) {
+    protected warn(...args: any[]) {
         if(!this._logger) {
             return;
         }
 
-        this._logger.warning(...args);
+        this._logger.warn(...args);
     }
 
     protected error(...args: any[]) {
