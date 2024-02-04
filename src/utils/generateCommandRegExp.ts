@@ -58,5 +58,5 @@ export const generateCommandRegExp = (part: string, partial = false) => {
         .replace(/\[([^\]]+)]/g, "(.+?)?")
         .replace(/\.\.\./g, '(.*)');
 
-    return new RegExp(`^${regExpString}$`);
+    return new RegExp(`^${regExpString}$`, "s");
 };
