@@ -1,4 +1,4 @@
-import {Logger} from "../types";
+import {Logger, Option} from "../types";
 import {
     escapeRegExp,
     generateCommandRegExp,
@@ -10,14 +10,6 @@ import {
 type HelpParams = false | {
     disabled?: boolean;
     description?: string;
-};
-
-type Option = {
-    name: string;
-    type: "string" | "boolean" | "number";
-    alias?: string;
-    description?: string;
-    default?: string | boolean | number;
 };
 
 type OptionParams = Omit<Option, "name" | "type"> & {
