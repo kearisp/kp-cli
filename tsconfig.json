@@ -10,7 +10,8 @@
         "allowJs": true,
         "outDir": "./lib/",
         "incremental": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "types": ["node"]
     },
     "include": ["./src/**/*"],
     "exclude": ["**/*.spec.ts"]

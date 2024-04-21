@@ -1,23 +1,21 @@
 import * as OS from "os";
 import * as Path from "path";
+import {InvalidError} from "../errors/InvalidError";
 
-import {Logger} from "../types";
 import {Command} from "./Command";
+import {Logger} from "./Logger";
 import {generateCompletion} from "../utils";
 
 
-class Cli extends Command {
-    protected scriptPath: string;
-
-    public constructor(logger?: Logger) {
-        super("", logger);
-    }
+class Cli {
+    protected name: string;
+    protected commands: Command[] = [];
 
     public completionScript() {
-        return generateCompletion(this._command);
+        return generateCompletion(this.name);
     }
 
-    protected parseCommand(command: string): string[] {
+    protected parseCommand(command: string, index: number): string[] {
         const parts: string[] = [];
 
         let current = "",
@@ -58,73 +56,101 @@ class Cli extends Command {
             parts.push(current);
         }
 
-        return parts;
+        const [, ...args] = parts;
+
+        return args.length < index ? [...args, ""] : args;
+    }
+
+    public command(name: string): Command {
+        let command = this.commands.find((command) => {
+            return command.name === name;
+        });
+
+        if(!command) {
+            command = new Command(name);
+
+            this.commands.push(command);
+        }
+
+        return command;
+    }
+
+    protected async process(parts: string[]) {
+        for(const command of this.commands) {
+            try {
+                const input = command.parse(parts);
+
+                return command.emit(this.name, input);
+            }
+            catch(err) {
+                if(!(err instanceof InvalidError)) {
+                    Logger.error(err.message);
+                }
+            }
+        }
+
+        throw new Error("Invalid command");
+    }
+
+    protected async complete(parts: string[]): Promise<string[]> {
+        let predicts: string[] = [];
+
+        for(const command of this.commands) {
+            try {
+                const res = await command.complete(parts);
+
+                predicts = [
+                    ...predicts,
+                    ...res
+                ];
+            }
+            catch(err) {
+
+            }
+        }
+
+        return predicts;
     }
 
     public async run(argv: string[]) {
-        const [, scriptPath, ...rest] = argv;
+        const [, scriptPath, ...parts] = argv;
 
-        this.scriptPath = scriptPath;
-        this._command = Path.basename(scriptPath);
+        this.name = Path.basename(scriptPath);
 
-        const parts = [this._command, ...rest];
+        this.command(`complete <index> <prev> <command>`)
+            .help({
+                description: "Generate completion script",
+                disabled: true
+            })
+            .option("compbash", {
+                type: "boolean"
+            })
+            .option("compgen", {
+                type: "boolean"
+            })
+            .option("compzsh", {
+                type: "boolean"
+            })
+            .action(async (input): Promise<string> => {
+                const parts = this.parseCommand(
+                    input.argument("command"),
+                    parseInt(input.argument("index"))
+                );
 
-        if(parts.indexOf("--completion") > -1 || parts.indexOf("--compbash") > -1 || parts.indexOf("--compgen") > -1) {
-            const completion = new Command(`${this._command} <index> <prev> <command>`, this._logger);
+                const res = await this.complete(parts);
 
-            const promise = new Promise<[string, string]>((resolve) => {
-                completion
-                    .option("completion", {
-                        type: "boolean"
+                return res
+                    .map((predict) => {
+                        if(/\s/.test(predict)) {
+                            return predict.replace(/\s/g, "\\ ");
+                        }
+
+                        return predict;
                     })
-                    .option("compbash", {
-                        type: "boolean"
-                    })
-                    .option("compgen", {
-                        type: "boolean"
-                    })
-                    .action((options, index: string, prev: string, command: string) => {
-                        resolve([index, command]);
-
-                        return "1";
-                    });
+                    .join(OS.EOL);
             });
 
-            try {
-                const res = await completion.process(parts);
-
-                if(res === "1") {
-                    const [index, command] = await promise;
-
-                    const p = this.parseCommand(command);
-
-                    const res = await this.complete(p.length - 1 < parseInt(index) ? [...p, ""] : p);
-
-                    return res
-                        .map((predict) => {
-                            if(/\s/.test(predict)) {
-                                return predict.replace(/\s/g, "\\ ");
-                            }
-
-                            return predict;
-                        })
-                        .join(OS.EOL);
-                }
-            }
-            catch(err) {
-                this.error(err.message);
-            }
-
-            return "";
-        }
-
-        const res = await this.process(parts);
-
-        if(res === null) {
-            throw new Error("Command not found");
-        }
-
-        return res;
+        return this.process(parts);
     }
 }
 
