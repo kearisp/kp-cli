@@ -1,6 +1,6 @@
 {
     "name": "@kearisp/cli",
-    "version": "1.0.7",
+    "version": "2.0.0",
     "license": "MIT",
     "author": "Kris Papercut <krispcut@gmail.com>",
     "description": "Command line interface for node.js",
@@ -20,10 +20,13 @@
     },
     "scripts": {
         "prepare": "npm run build",
-        "watch": "tsc --watch",
+        "watch": "KP_LOG=disable tsc --watch",
+        "watch:test": "KP_LOG=log jest --colors --watchAll",
+        "watch:test-cli": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
+        "watch:test-command": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",
+        "watch:test-parser": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Parser.spec.ts",
         "build": "tsc",
-        "test": "jest --colors",
-        "test:watch": "jest --colors --watch"
+        "test": "KP_LOG=none jest --colors"
     },
     "dependencies": {
         "os": "^0.1.2",
@@ -31,10 +34,12 @@
     },
     "devDependencies": {
         "@types/jest": "^29.5.12",
-        "@types/node": "^20.11.16",
+        "@types/node": "^20.12.7",
+        "date-fns": "^3.6.0",
+        "fs": "^0.0.1-security",
         "jest": "^29.7.0",
         "ts-jest": "^29.1.2",
         "ts-node": "^10.9.2",
-        "typescript": "^5.3.3"
+        "typescript": "^5.4.5"
     }
 }

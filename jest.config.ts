@@ -131,7 +131,7 @@ const config: Config.InitialOptionsWithRootDir = {
 
     // The paths to modules that run some code to configure or set up the testing environment before each test
     setupFiles: [
-        // "<rootDir>/test/index.ts"
+        "<rootDir>/test/index.ts"
     ],
     // A list of paths to modules that run some code to configure or set up the testing framework before each test
     // setupFilesAfterEnv: [
@@ -162,7 +162,6 @@ const config: Config.InitialOptionsWithRootDir = {
 
     // The glob patterns Jest uses to detect test files
     testMatch: [
-        "<rootDir>/**/__tests__/**/*.[jt]s?(x)",
         "<rootDir>/**/?(*.)+(spec|test).[tj]s?(x)"
     ],
 
