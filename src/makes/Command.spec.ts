@@ -21,17 +21,17 @@ describe("Command.parse", () => {
             });
 
         expect(command.parse(["test", "John"])).toEqual({
-            args: {
+            _arguments: {
                 name: "John"
             },
-            options: {}
+            _options: {}
         });
 
         expect(command.parse(["test", "John", "-n=test"])).toEqual({
-            args: {
+            _arguments: {
                 name: "John"
             },
-            options: {
+            _options: {
                 name: "test"
             }
         });
@@ -41,10 +41,10 @@ describe("Command.parse", () => {
         const command = (new Command("config [...config]"));
 
         expect(command.parse(["config", "John", "-n=test"])).toEqual({
-            args: {
+            _arguments: {
                 config: ["John", "-n=test"]
             },
-            options: {}
+            _options: {}
         });
     });
 
@@ -59,10 +59,10 @@ describe("Command.parse", () => {
             });
 
         expect(command.parse(["test", "test", "--help"])).toEqual({
-            args: {
+            _arguments: {
                 name: "test"
             },
-            options: {
+            _options: {
                 help: true
             }
         });

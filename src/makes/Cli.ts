@@ -75,7 +75,7 @@ class Cli {
         return command;
     }
 
-    protected async process(parts: string[]) {
+    protected async process(parts: string[]): Promise<string> {
         for(const command of this.commands) {
             try {
                 const input = command.parse(parts);

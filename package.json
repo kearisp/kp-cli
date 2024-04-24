@@ -1,6 +1,6 @@
 {
     "name": "@kearisp/cli",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "license": "MIT",
     "author": "Kris Papercut <krispcut@gmail.com>",
     "description": "Command line interface for node.js",
@@ -20,7 +20,7 @@
     },
     "scripts": {
         "prepare": "npm run build",
-        "watch": "KP_LOG=disable tsc --watch",
+        "watch": "tsc --watch",
         "watch:test": "KP_LOG=log jest --colors --watchAll",
         "watch:test-cli": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
         "watch:test-command": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",

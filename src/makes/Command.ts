@@ -214,7 +214,7 @@ export class Command {
         return new CommandInput(args, options);
     }
 
-    public async emit(name: string, input: CommandInput) {
+    public async emit(name: string, input: CommandInput): Promise<string> {
         if(this._help && input.option("help")) {
             const options = this._options.filter((option) => {
                 return option.help;
@@ -244,7 +244,13 @@ export class Command {
             throw new Error("Command without action");
         }
 
-        return this._action(input);
+        const res = await this._action(input);
+
+        if(typeof res === "undefined") {
+            return "";
+        }
+
+        return res;
     }
 
     protected async predictCommand(command: string, part: string, input: CommandInput) {

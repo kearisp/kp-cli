@@ -46,7 +46,7 @@ describe("Cli.run", () => {
                 alias: "n"
             })
             .action((input) => {
-                return input.option("name");
+                return input.option("name", "");
             });
 
         expect(await cli.run(["node", "cli", "process", "--name=test"])).toBe("test");
