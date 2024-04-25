@@ -12,6 +12,7 @@ export class Parser {
     public static readonly attrRequiredRegexp = /^<([\w_-]+)>(.*)?$/;
     public static readonly attrOptionalRegexp = /^\[([\w_-]+)](.*)?$/;
     public static readonly optionRegexp = /^-(?:-(\w[\w\d_-]*)|(\w))$/;
+    public static readonly optionMultipleRegexp = /^-(\w+)$/;
     public static readonly spreadRequiredRegexp = /^<\.\.\.([0-9\w_-]+)>(.*)?$/;
     public static readonly spreadOptionalRegexp = /^\[\.\.\.([0-9\w_-]+)](.*)$/
     protected index: number = 0;
@@ -88,6 +89,10 @@ export class Parser {
         return !this.eol && regOptionWithValue.test(this.part);
     }
 
+    public isMultipleOptions(): boolean {
+        return Parser.optionMultipleRegexp.test(this.part);
+    }
+
     public parseOption() {
         const [, name, alias] = regOption.exec(this.part) || [];
 
@@ -98,6 +103,12 @@ export class Parser {
         const [, name, alias, value] = regOptionWithValue.exec(this.part) || [];
 
         return {name, alias, value};
+    }
+
+    public parseOptionMultiple() {
+        const [, options= ""] = Parser.optionMultipleRegexp.exec(this.part) || [];
+
+        return options.split("");
     }
 
     public getArguments(command: string) {

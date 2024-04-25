@@ -184,8 +184,6 @@ export class Command {
 
                     const option = this.getOptionSettings(name, alias);
 
-                    // console.log(option);
-
                     if(option) {
                         switch(option.type) {
                             case "boolean":
@@ -201,6 +199,15 @@ export class Command {
                                 break;
                         }
                     }
+                }
+                else if(parser.isMultipleOptions()) {
+                    parser.parseOptionMultiple().forEach((alias: string) => {
+                        const option = this.getOptionSettings(undefined, alias);
+
+                        if(option && option.type === "boolean") {
+                            options[option.name] = true;
+                        }
+                    });
                 }
 
                 parser.next();

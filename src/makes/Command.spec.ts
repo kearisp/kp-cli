@@ -48,6 +48,49 @@ describe("Command.parse", () => {
         });
     });
 
+    it("Should be parsed multiple options", async (): Promise<void> => {
+        const command = (new Command("cli"))
+            .option("foo", {
+                type: "boolean",
+                alias: "f"
+            })
+            .option("bar", {
+                type: "boolean",
+                alias: "b"
+            })
+            .option("arr", {
+                type: "boolean",
+                alias: "a"
+            });
+
+        expect(command.parse(["cli", "-fb"]))
+            .toEqual({
+                _arguments: {},
+                _options: {
+                    foo: true,
+                    bar: true
+                }
+            });
+
+        expect(command.parse(["cli", "-bf"]))
+            .toEqual({
+                _arguments: {},
+                _options: {
+                    foo: true,
+                    bar: true
+                }
+            });
+
+        expect(command.parse(["cli", "-bffbbfbbfbbfbfbfff"]))
+            .toEqual({
+                _arguments: {},
+                _options: {
+                    foo: true,
+                    bar: true
+                }
+            });
+    });
+
     it("Should be help", async (): Promise<void> => {
         const command = (new Command("test [name]"))
             .help({

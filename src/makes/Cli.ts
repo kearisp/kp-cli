@@ -112,7 +112,7 @@ class Cli {
         return predicts;
     }
 
-    public async run(argv: string[]) {
+    public async run(argv: string[]): Promise<string> {
         const [, scriptPath, ...parts] = argv;
 
         this.name = Path.basename(scriptPath);
