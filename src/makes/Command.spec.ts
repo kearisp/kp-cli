@@ -37,6 +37,15 @@ describe("Command.parse", () => {
         });
     });
 
+    it("Should be parsed without optional argument", async () => {
+        const command = (new Command("use [name]"));
+
+        expect(command.parse(["use"])).toEqual({
+            _arguments: {},
+            _options: {}
+        });
+    });
+
     it("Should be parsed spread", async (): Promise<void> => {
         const command = (new Command("config [...config]"));
 
@@ -110,6 +119,19 @@ describe("Command.parse", () => {
             }
         });
     });
+
+    it("Should be error without required argument", async (): Promise<void> => {
+        const command = new Command("use <name>");
+
+        try {
+            command.parse(["use"]);
+
+            throw new Error("Completed successfully");
+        }
+        catch(err) {
+            expect(err).toBeInstanceOf(InvalidError);
+        }
+    });
 });
 
 describe("Command.complete", () => {
@@ -142,7 +164,7 @@ describe("Command.complete", () => {
         expect(res).toEqual(["-n", "--name"])
     });
 
-    it("Should predict second argument", async (): Promise<void> => {
+    it("Should predict second argument depends on first", async (): Promise<void> => {
         const command = (new Command("[arg1] [arg2]"))
             .completion("arg2", (input) => {
                 if(input.argument("arg1") === "foo") {
@@ -155,6 +177,16 @@ describe("Command.complete", () => {
         const res = await command.complete(["foo", ""]);
 
         expect(res).toEqual(["right"]);
+    });
+
+    it("Should predict spread", async (): Promise<void> => {
+        const command = (new Command("[...name]"))
+            .completion("name", () => {
+                return ["foo", "bar"];
+            });
+
+        expect(await command.complete([""])).toEqual(["foo", "bar"]);
+        expect(await command.complete(["foo", ""])).toEqual(["bar"]);
     });
 
     it("Should throw error on command", async (): Promise<void> => {
@@ -172,14 +204,14 @@ describe("Command.complete", () => {
         try {
             await command.complete(["test", "foo", "--no"]);
 
-            throw Error("Completed successfully");
+            throw new Error("Completed successfully");
         }
         catch(err) {
             expect(err).toBeInstanceOf(Error);
         }
     });
 
-    it("Should has argument in input", async () => {
+    it("Should has argument in input", async (): Promise<void> => {
         const command = (new Command("[arg1] [arg2]"))
             .completion("arg1", () => {
                 return ["test"];

@@ -6,6 +6,7 @@
 
 # Source code
 /src
+/test
 
 # Builds
 /lib/tsconfig.tsbuildinfo

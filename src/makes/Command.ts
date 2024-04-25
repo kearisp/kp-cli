@@ -1,9 +1,10 @@
 import * as OS from "os";
 
-import {Option} from "../types";
+import {Option, Param} from "../types";
 import {escapeRegExp} from "../utils";
 import {InvalidError} from "../errors/InvalidError";
 import {Parser} from "./Parser";
+import {Logger} from "./Logger";
 import {CommandInput} from "./CommandInput";
 
 
@@ -40,6 +41,20 @@ export class Command {
 
     public get name(): string {
         return this._command;
+    }
+
+    protected getCommandInput(args: any, options: any): CommandInput {
+        const _this = this;
+
+        return new class extends CommandInput {
+            protected getParamSettings(): Param[] {
+                return [];
+            }
+
+            protected getOptionSettings(): Option[] {
+                return _this._options;
+            }
+        }(args, options);
     }
 
     public option(name: string, params: OptionParams) {
@@ -218,7 +233,8 @@ export class Command {
             throw new InvalidError("Haven't ended");
         }
 
-        return new CommandInput(args, options);
+        // return new CommandInput(args, options);
+        return this.getCommandInput(args, options);
     }
 
     public async emit(name: string, input: CommandInput): Promise<string> {
@@ -261,10 +277,6 @@ export class Command {
     }
 
     protected async predictCommand(command: string, part: string, input: CommandInput) {
-        const comAttrReq = /^<([\w_-]+)>(.*)?$/;
-        const comAttrOpt = /^\[([\w_-]+)](.*)?$/;
-        const comSpread = /^\[\.\.\.([0-9\w_-]+)](.*)?$/;
-        const comSpreadReq = /^<\.\.\.([0-9\w_-]+)>(.*)?$/;
         const comOther = /^([^\[\]<>{}]+)(.*)$/;
 
         let exitCount = 0;
@@ -277,40 +289,40 @@ export class Command {
         while(restCommand) {
             let stepReg: string;
 
-            if(comAttrReq.test(restCommand)) {
-                const [, name, rest] = comAttrReq.exec(restCommand);
+            if(Parser.paramRequiredRegexp.test(restCommand)) {
+                const [, name, rest] = Parser.paramRequiredRegexp.exec(restCommand);
 
                 isAction = true;
                 predict = name;
                 restCommand = rest;
                 stepReg = "(.+?)";
             }
-            else if(comAttrOpt.test(restCommand)) {
-                const [, name, rest] = comAttrOpt.exec(restCommand);
+            else if(Parser.paramOptionalRegexp.test(restCommand)) {
+                const [, name, rest] = Parser.paramOptionalRegexp.exec(restCommand);
 
                 isAction = true;
                 predict = name;
                 restCommand = rest;
                 stepReg = "(.+?)?";
             }
-            else if(comSpread.test(restCommand)) {
-                const [, match, rest] = comSpread.exec(restCommand) || [];
-
-                isAction = true;
-                predict = match;
-                restCommand = rest;
-                stepReg = "(.+?)?";
-            }
-            else if(comSpreadReq.test(restCommand)) {
-                const [, match, rest] = comSpreadReq.exec(restCommand) || [];
+            else if(Parser.spreadRequiredRegexp.test(restCommand)) {
+                const [, match, rest] = Parser.spreadRequiredRegexp.exec(restCommand) || [];
 
                 isAction = true;
                 predict = match;
                 restCommand = rest;
                 stepReg = "(.+?)";
+            }
+            else if(Parser.spreadOptionalRegexp.test(restCommand)) {
+                const [, match, rest] = Parser.spreadOptionalRegexp.exec(restCommand) || [];
+
+                isAction = true;
+                predict = match;
+                restCommand = rest;
+                stepReg = "(.+?)?";
             }
             else if(comOther.test(restCommand)) {
-                const [, match, rest] = comOther.exec(restCommand) || [];
+                const [, match, rest = ""] = comOther.exec(restCommand) || [];
 
                 isAction = false;
                 predict = match;
@@ -318,14 +330,8 @@ export class Command {
                 stepReg = `${escapeRegExp(match)}`;
             }
 
-            exitCount++;
-
-            if(exitCount > 100) {
-                console.warn("Emergency exit", {
-                    restCommand
-                });
-
-                return null;
+            if(++exitCount > 50) {
+                throw new Error(`Emergency exit. Rest command: "${restCommand}"`);
             }
 
             if(stepReg) {
@@ -335,7 +341,15 @@ export class Command {
                     });
 
                     if(completion) {
-                        const predicts: string[] = await Promise.resolve(completion.action(input));
+                        let predicts: string[] = await completion.action(input);
+
+                        const value = input.argument(predict) as string|string[];
+
+                        if(Array.isArray(value)) {
+                            predicts = predicts.filter((p) => {
+                                return !value.includes(p);
+                            });
+                        }
 
                         resPredicts = predicts.reduce((res: string[], predict: string) => {
                             return [
@@ -401,7 +415,21 @@ export class Command {
 
         for(const command of commands) {
             if(parser.isSpread(command)) {
+                const name = parser.parseSpreadCommand(command);
+                const value = [];
 
+                while(!parser.eol) {
+                    if(parser.part) {
+                        value.push(parser.part);
+                    }
+
+                    parser.next();
+                }
+
+                args[name] = value;
+
+                Logger.info(args);
+                return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
             }
             else if(!parser.isLast && parser.isCommand(command)) {
                 const partArguments = parser.getArguments(command);
@@ -413,11 +441,9 @@ export class Command {
                 parser.next();
             }
             else if(parser.isLast && parser.isCommand(command, true)) {
-                return this.predictCommand(command, parser.part, new CommandInput(args, options));
+                return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
             }
             else {
-                // console.error("else", command, parser.part);
-
                 throw new InvalidError("Error");
             }
 

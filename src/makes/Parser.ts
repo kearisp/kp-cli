@@ -9,12 +9,12 @@ const regOptionWithValue = /^-(?:-(\w[\w\d_-]*)|(\w))=(.*)$/;
 const regShortMultipleOption = /^-(\w+)$/;
 
 export class Parser {
-    public static readonly attrRequiredRegexp = /^<([\w_-]+)>(.*)?$/;
-    public static readonly attrOptionalRegexp = /^\[([\w_-]+)](.*)?$/;
-    public static readonly optionRegexp = /^-(?:-(\w[\w\d_-]*)|(\w))$/;
-    public static readonly optionMultipleRegexp = /^-(\w+)$/;
+    public static readonly paramRequiredRegexp = /^<([\w_-]+)>(.*)?$/;
+    public static readonly paramOptionalRegexp = /^\[([\w_-]+)](.*)?$/;
     public static readonly spreadRequiredRegexp = /^<\.\.\.([0-9\w_-]+)>(.*)?$/;
     public static readonly spreadOptionalRegexp = /^\[\.\.\.([0-9\w_-]+)](.*)$/
+    public static readonly optionRegexp = /^-(?:-(\w[\w\d_-]*)|(\w))$/;
+    public static readonly optionMultipleRegexp = /^-(\w+)$/;
     protected index: number = 0;
 
     public constructor(
@@ -22,7 +22,7 @@ export class Parser {
     ) {}
 
     public get part(): string {
-        return this.parts[this.index];
+        return this.parts[this.index] || "";
     }
 
     public get isLast(): boolean {
@@ -47,10 +47,6 @@ export class Parser {
     }
 
     public isCommand(command: string, partial: boolean = false): boolean {
-        if(this.eol || this.isOption()) {
-            return false;
-        }
-
         const {
             regex,
             partRegex

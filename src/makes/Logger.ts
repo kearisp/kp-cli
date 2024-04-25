@@ -1,7 +1,6 @@
 import * as OS from "os";
 import * as Path from "path";
 import * as FS from "fs";
-import {format} from "date-fns/format";
 
 
 export class Logger {
@@ -35,7 +34,26 @@ export class Logger {
         const DATA_DIR = process.env.WS_PATH || Path.join(OS.homedir(), ".workspace");
         const LOG_FILE = Path.join(DATA_DIR, "ws.log");
 
-        const time = format(new Date(), "yyyy-MM-dd hh:mm:ss");
+        const getFormatedTime = (): string => {
+            const prepareValue = (value: number): string => {
+                if(value < 9) {
+                    return `0${value}`;
+                }
+
+                return `${value}`;
+            };
+
+            const date = new Date(),
+                year = date.getFullYear(),
+                month = prepareValue(date.getMonth() + 1),
+                days = prepareValue(date.getDate()),
+                hours = prepareValue(date.getHours()),
+                minutes = prepareValue(date.getMinutes()),
+                seconds = prepareValue(date.getSeconds());
+
+            return `${year}-${month}-${days} ${hours}:${minutes}:${seconds}`;
+        };
+
         const logData = data.map((item) => {
             return typeof item !== "string" ? JSON.stringify(item) : item;
         }).join(" ");
@@ -44,7 +62,7 @@ export class Logger {
             FS.writeFileSync(LOG_FILE, "");
         }
 
-        FS.appendFileSync(LOG_FILE, `[${time}] ${type}: ${logData}\n`);
+        FS.appendFileSync(LOG_FILE, `[${getFormatedTime()}] ${type}: ${logData}\n`);
     }
 
     public static mute(): void {

@@ -1,8 +1,22 @@
+import {
+    Option,
+    Param
+} from "../types";
+
+
 export class CommandInput {
     public constructor(
         protected readonly _arguments: any,
         protected readonly _options: any
     ) {}
+
+    protected getParamSettings(): Param[] {
+        return [];
+    }
+
+    protected getOptionSettings(): Option[] {
+        return [];
+    }
 
     public argument(key: string): null|string {
         if(key in this._arguments) {
