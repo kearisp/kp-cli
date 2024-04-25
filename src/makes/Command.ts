@@ -184,8 +184,6 @@ export class Command {
 
                     const option = this.getOptionSettings(name, alias);
 
-                    // console.log(option);
-
                     if(option) {
                         switch(option.type) {
                             case "boolean":
@@ -202,6 +200,15 @@ export class Command {
                         }
                     }
                 }
+                else if(parser.isMultipleOptions()) {
+                    parser.parseOptionMultiple().forEach((alias: string) => {
+                        const option = this.getOptionSettings(undefined, alias);
+
+                        if(option && option.type === "boolean") {
+                            options[option.name] = true;
+                        }
+                    });
+                }
 
                 parser.next();
             }
@@ -214,7 +221,7 @@ export class Command {
         return new CommandInput(args, options);
     }
 
-    public async emit(name: string, input: CommandInput) {
+    public async emit(name: string, input: CommandInput): Promise<string> {
         if(this._help && input.option("help")) {
             const options = this._options.filter((option) => {
                 return option.help;
@@ -244,7 +251,13 @@ export class Command {
             throw new Error("Command without action");
         }
 
-        return this._action(input);
+        const res = await this._action(input);
+
+        if(typeof res === "undefined") {
+            return "";
+        }
+
+        return res;
     }
 
     protected async predictCommand(command: string, part: string, input: CommandInput) {

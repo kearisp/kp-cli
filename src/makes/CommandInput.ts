@@ -1,26 +1,30 @@
 export class CommandInput {
     public constructor(
-        protected readonly args: any,
-        protected readonly options: any
+        protected readonly _arguments: any,
+        protected readonly _options: any
     ) {}
 
     public argument(key: string): null|string {
-        if(key in this.args) {
-            return this.args[key];
+        if(key in this._arguments) {
+            return this._arguments[key];
         }
 
         return null;
     }
 
     public arguments(): any {
-        return this.args;
+        return this._arguments;
     }
 
-    public option(key: string): null|string {
-        if(key in this.options) {
-            return this.options[key];
+    public option<T extends null|string|boolean>(key: string, defaultValue: T = null): T {
+        if(key in this._options) {
+            return this._options[key];
         }
 
-        return null;
+        return defaultValue;
+    }
+
+    public options(): any {
+        return this._options;
     }
 }

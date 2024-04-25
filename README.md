@@ -47,15 +47,15 @@ cli.run(process.argv).then((res) => {
 
 ```typescript
 cli.command("foo <foo1> [foo2]")
-    .action((options, foo1: string, foo2?: string) => {
-        return `Foo result, with arguments foo1=${foo1} foo2=${foo2}`;
+    .action((input: CommandInput) => {
+        return `Foo result, with arguments foo1=${input.argument("foo1")} foo2=${input.argument("foo2")}`;
     });
 ```
 
 ```typescript
 cli.command("bar [...bars]")
-    .action((options, bars: string[]) => {
-        return "Bar result, Bars: " + bars.join(", ");
+    .action((input: CommandInput) => {
+        return "Bar result, Bars: " + input.argument("bars").join(", ");
     });
 ```
 
@@ -77,11 +77,11 @@ cli.command("foo")
         type: "boolean",
         alias: "i"
     })
-    .action((options) => {
+    .action((input: CommandInput) => {
         const {
             bar = "",
             init = false
-        } = options;
+        } = input.options();
 
         return `Foo result, with options bar=${bar} init=${init.toString()}`;
     });
@@ -98,10 +98,10 @@ cli.command("foo")
         alias: "o",
         description: "Option description"
     })
-    .action((options) => {
+    .action((input) => {
         const {
             option = ""
-        } = options;
+        } = input.options();
 
         return `option=${option}`;
     });
@@ -125,7 +125,11 @@ cli.command("foo")
 ```typescript
 cli.command("foo <bar>")
     .completion("bar", () => ["value1", "value2", "value3"])
-    .action((options, bar: string) => {
+    .action((input) => {
+        const {
+            bar = ""
+        } = input.arguments();
+
         return `Foo result, with argument bar=${bar}`;
     });
 

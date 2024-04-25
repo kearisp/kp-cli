@@ -21,17 +21,17 @@ describe("Command.parse", () => {
             });
 
         expect(command.parse(["test", "John"])).toEqual({
-            args: {
+            _arguments: {
                 name: "John"
             },
-            options: {}
+            _options: {}
         });
 
         expect(command.parse(["test", "John", "-n=test"])).toEqual({
-            args: {
+            _arguments: {
                 name: "John"
             },
-            options: {
+            _options: {
                 name: "test"
             }
         });
@@ -41,11 +41,54 @@ describe("Command.parse", () => {
         const command = (new Command("config [...config]"));
 
         expect(command.parse(["config", "John", "-n=test"])).toEqual({
-            args: {
+            _arguments: {
                 config: ["John", "-n=test"]
             },
-            options: {}
+            _options: {}
         });
+    });
+
+    it("Should be parsed multiple options", async (): Promise<void> => {
+        const command = (new Command("cli"))
+            .option("foo", {
+                type: "boolean",
+                alias: "f"
+            })
+            .option("bar", {
+                type: "boolean",
+                alias: "b"
+            })
+            .option("arr", {
+                type: "boolean",
+                alias: "a"
+            });
+
+        expect(command.parse(["cli", "-fb"]))
+            .toEqual({
+                _arguments: {},
+                _options: {
+                    foo: true,
+                    bar: true
+                }
+            });
+
+        expect(command.parse(["cli", "-bf"]))
+            .toEqual({
+                _arguments: {},
+                _options: {
+                    foo: true,
+                    bar: true
+                }
+            });
+
+        expect(command.parse(["cli", "-bffbbfbbfbbfbfbfff"]))
+            .toEqual({
+                _arguments: {},
+                _options: {
+                    foo: true,
+                    bar: true
+                }
+            });
     });
 
     it("Should be help", async (): Promise<void> => {
@@ -59,10 +102,10 @@ describe("Command.parse", () => {
             });
 
         expect(command.parse(["test", "test", "--help"])).toEqual({
-            args: {
+            _arguments: {
                 name: "test"
             },
-            options: {
+            _options: {
                 help: true
             }
         });
