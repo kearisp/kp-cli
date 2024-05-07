@@ -448,7 +448,7 @@ export class Command {
             }
 
             while(parser.isOption(true)) {
-                if(parser.isLast && parser.isCommand(command)) {
+                if(parser.isLast) {
                     return this.predictOption(parser.part);
                 }
 
