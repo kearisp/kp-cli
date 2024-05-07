@@ -59,6 +59,12 @@ describe("Cli.run", () => {
         const cli = new Cli();
 
         cli.command("init");
+        cli.command("start")
+            .option("foo", {
+                type: "boolean",
+                alias: "f",
+                description: "Foo"
+            });
         cli.command("process <name>")
             .completion("name", () => {
                 return ["foo", "bar"];
@@ -71,7 +77,10 @@ describe("Cli.run", () => {
             .toEqual("process");
 
         expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "1", "cli", "cli "]))
-            .toEqual(["init", "process"].join(OS.EOL));
+            .toEqual(["init", "start", "process"].join(OS.EOL));
+
+        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "2", "cli", "cli start -"]))
+            .toEqual(["-f", "--foo"].join(OS.EOL));
     });
 
     it("Should be help", async (): Promise<void> => {
