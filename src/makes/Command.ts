@@ -381,23 +381,39 @@ export class Command {
     }
 
     protected async predictOption(part: string) {
-        const [, dash, name] = /^(--?)(\w+)?/.exec(part) || [];
+        const [, dash, name, sign, value] = /^(--?)(\w+)?(=)?(.+)?/.exec(part) || [];
 
-        return this._options.reduce((res: string[], option) => {
-            if(dash === "-") {
-                res.push(
-                    `-${option.alias}`,
-                    `--${option.name}`
-                );
-            }
-            else if(dash === "--") {
-                res.push(
-                    `--${option.name}`
-                );
+        const option = this._options.find((option) => {
+            if(!name) {
+                return false;
             }
 
-            return res;
-        }, []);
+            return option.name === name || option.alias === name;
+        });
+
+        if(!option) {
+            return this._options.reduce((res: string[], option) => {
+                if(dash === "-") {
+                    res.push(
+                        `-${option.alias}`,
+                        `--${option.name}`
+                    );
+                }
+                else if(dash === "--") {
+                    res.push(
+                        `--${option.name}`
+                    );
+                }
+
+                return res;
+            }, []);
+        }
+
+        // console.log(option.name);
+
+        // console.log(dash, name, sign, value);
+
+        return [];
     }
 
     public async complete(parts: string[]): Promise<string[]> {
@@ -428,7 +444,6 @@ export class Command {
 
                 args[name] = value;
 
-                Logger.info(args);
                 return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
             }
             else if(!parser.isLast && parser.isCommand(command)) {
