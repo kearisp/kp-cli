@@ -164,6 +164,25 @@ describe("Command.complete", () => {
         expect(res).toEqual(["-n", "--name"])
     });
 
+    it("Should predict option value", async (): Promise<void> => {
+        const command = (new Command("test"))
+            .option("name", {
+                type: "string",
+                alias: "n",
+                description: "Test description"
+            })
+            .option("arr", {
+                type: "string",
+                alias: "a",
+                description: "Array"
+            })
+            .completion("name", (input) => {
+                return ["foo", "bar"];
+            });
+
+        expect(await command.complete(["test", "-a=1", "-n", ""])).toEqual(["foo", "bar"]);
+    });
+
     it("Should predict second argument depends on first", async (): Promise<void> => {
         const command = (new Command("[arg1] [arg2]"))
             .completion("arg2", (input) => {

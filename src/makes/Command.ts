@@ -4,7 +4,6 @@ import {Option, Param} from "../types";
 import {escapeRegExp} from "../utils";
 import {InvalidError} from "../errors/InvalidError";
 import {Parser} from "./Parser";
-import {Logger} from "./Logger";
 import {CommandInput} from "./CommandInput";
 
 
@@ -233,7 +232,6 @@ export class Command {
             throw new InvalidError("Haven't ended");
         }
 
-        // return new CommandInput(args, options);
         return this.getCommandInput(args, options);
     }
 
@@ -380,24 +378,48 @@ export class Command {
         return resPredicts;
     }
 
-    protected async predictOption(part: string) {
-        const [, dash, name] = /^(--?)(\w+)?/.exec(part) || [];
+    protected async predictOption(part: string, input: CommandInput) {
+        const [, dash, name, sign, value] = /^(--?)(\w+)?(=)?(.+)?/.exec(part) || [];
 
-        return this._options.reduce((res: string[], option) => {
-            if(dash === "-") {
-                res.push(
-                    `-${option.alias}`,
-                    `--${option.name}`
-                );
-            }
-            else if(dash === "--") {
-                res.push(
-                    `--${option.name}`
-                );
+        const option = this._options.find((option) => {
+            if(!name) {
+                return false;
             }
 
-            return res;
-        }, []);
+            return option.name === name || option.alias === name;
+        });
+
+        if(!option) {
+            return this._options.reduce((res: string[], option) => {
+                if(dash === "-") {
+                    res.push(
+                        `-${option.alias}`,
+                        `--${option.name}`
+                    );
+                }
+                else if(dash === "--") {
+                    res.push(
+                        `--${option.name}`
+                    );
+                }
+
+                return res;
+            }, []);
+        }
+
+        const completion = this._completions.find((completion) => {
+            return completion.name === option.name;
+        });
+
+        if(!completion) {
+            return [];
+        }
+
+        const predicts = await completion.action(input);
+
+        return predicts.map((predict) => {
+            return ``;
+        });
     }
 
     public async complete(parts: string[]): Promise<string[]> {
@@ -428,7 +450,6 @@ export class Command {
 
                 args[name] = value;
 
-                Logger.info(args);
                 return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
             }
             else if(!parser.isLast && parser.isCommand(command)) {
@@ -448,9 +469,121 @@ export class Command {
             }
 
             while(parser.isOption(true)) {
-                if(parser.isLast) {
-                    return this.predictOption(parser.part);
+                const {
+                    dash,
+                    name,
+                    sign,
+                    value
+                } = parser.parseOptionV2();
+
+                const option = name ? this._options.find((option) => {
+                    if(dash === "-") {
+                        return option.alias === name;
+                    }
+
+                    return option.name === name;
+                }) : undefined;
+
+                if(!option && !sign && parser.isLast) {
+                    return this._options.reduce((res: string[], option) => {
+                        if(dash === "-" && option.alias) {
+                            res.push(`-${option.alias}`);
+                        }
+
+                        res.push(`--${option.name}`);
+
+                        return res;
+                    }, []);
                 }
+
+                if(option) {
+                    switch(option.type) {
+                        case "boolean":
+                            options[option.name] = true;
+                            break;
+
+                        case "string":
+                        case "number":
+                            let v: any = value;
+
+                            if(!parser.isLast && sign !== "=") {
+                                parser.next();
+
+                                v = parser.part;
+                            }
+
+                            if(option.type === "number") {
+                                v = parseFloat(v);
+                            }
+
+                            if(parser.isLast) {
+                                const completion = this._completions.find((completion) => {
+                                    return completion.name === option.name;
+                                });
+
+                                if(!completion) {
+                                    return [];
+                                }
+
+                                const predicts = await completion.action(this.getCommandInput(args, options));
+
+                                return predicts.map((predict): string => {
+                                    if(sign === "=") {
+                                        return `${dash}${name}${sign}${predict}`;
+                                    }
+
+                                    return predict;
+                                });;
+                            }
+
+                            options[option.name] = v;
+                            break;
+                    }
+                }
+
+                // if(parser.isLast) {
+                //     return this.predictOption(parser.part, this.getCommandInput(args, options));
+                // }
+                // else if(parser.isRegOption()) {
+                //     const {name, alias} = parser.parseOption();
+                //
+                //     const option = this.getOptionSettings(name, alias);
+                //
+                //     if(option) {
+                //         switch(option.type) {
+                //             case "boolean":
+                //                 break;
+                //
+                //             case "number":
+                //                 break;
+                //
+                //             case "string":
+                //                 parser.next();
+                //                 options[option.name] = parser.part;
+                //                 break;
+                //         }
+                //     }
+                // }
+                // else if(parser.isOptionWithValue()) {
+                //     const {name, alias, value} = parser.parseOptionWithValue();
+                //
+                //     const option = this.getOptionSettings(name, alias);
+                //
+                //     if(option) {
+                //         switch(option.type) {
+                //             case "boolean":
+                //                 break;
+                //
+                //             case "number":
+                //                 options[option.name] = parseFloat(value);
+                //                 break;
+                //
+                //             case "string":
+                //                 options[option.name] = value;
+                //                 break;
+                //         }
+                //     }
+                // }
 
                 parser.next();
             }

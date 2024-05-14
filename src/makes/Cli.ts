@@ -7,7 +7,7 @@ import {Logger} from "./Logger";
 import {generateCompletion} from "../utils";
 
 
-class Cli {
+export class Cli {
     protected name: string;
     protected commands: Command[] = [];
 
@@ -39,7 +39,7 @@ class Cli {
                 quotes = "";
                 current = "";
             }
-            else if(char === " " && !escape && !quotes) {
+            else if((char === " ") && !escape && !quotes) {
                 if(current) {
                     parts.push(current);
                 }
@@ -47,6 +47,10 @@ class Cli {
                 current = "";
             }
             else {
+                if(char === "=") {
+                    index--;
+                }
+
                 current += (escape ? "\\".repeat(escape - 1) : "") + char;
                 escape = 0;
             }
@@ -105,7 +109,7 @@ class Cli {
                 ];
             }
             catch(err) {
-
+                //
             }
         }
 
@@ -117,7 +121,7 @@ class Cli {
 
         this.name = Path.basename(scriptPath);
 
-        this.command(`complete <index> <prev> <command>`)
+        this.command(`complete [...args]`)
             .help({
                 description: "Generate completion script",
                 disabled: true
@@ -132,10 +136,9 @@ class Cli {
                 type: "boolean"
             })
             .action(async (input): Promise<string> => {
-                const parts = this.parseCommand(
-                    input.argument("command"),
-                    parseInt(input.argument("index"))
-                );
+                const [index, prev, command] = input.argument("args") || [];
+
+                const parts = this.parseCommand(command, parseInt(index));
 
                 const res = await this.complete(parts);
 
@@ -153,6 +156,3 @@ class Cli {
         return this.process(parts);
     }
 }
-
-
-export {Cli};
