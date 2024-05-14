@@ -29,7 +29,7 @@ export class Parser {
         return this.parts.length - 1 === this.index;
     }
 
-    public get eol() {
+    public get eol(): boolean {
         return this.parts.length <= this.index;
     }
 
@@ -37,11 +37,7 @@ export class Parser {
         this.index++;
     }
 
-    public isSpread(command: string) {
-        if(this.eol) {
-            return false;
-        }
-
+    public isSpread(command: string): boolean {
         return Parser.spreadOptionalRegexp.test(command) ||
             Parser.spreadRequiredRegexp.test(command);
     }
@@ -87,6 +83,17 @@ export class Parser {
 
     public isMultipleOptions(): boolean {
         return Parser.optionMultipleRegexp.test(this.part);
+    }
+
+    public parseOptionV2() {
+        const [, dash, name, sign, value] = /^(--?)([\w-_]+)?(?:(=)(.+)?)?/.exec(this.part || "") || [];
+
+        return {
+            dash,
+            name,
+            sign,
+            value
+        };
     }
 
     public parseOption() {
@@ -144,7 +151,7 @@ export class Parser {
             exitCount = 0;
 
         while(restCommand) {
-            let stepReg;
+            let stepReg: string;
 
             if(comAttrReq.test(restCommand)) {
                 const [, name, rest] = comAttrReq.exec(restCommand);
@@ -175,7 +182,7 @@ export class Parser {
             }
 
             if(exitCount++ > 100) {
-                throw new Error("Emergency exit")
+                throw new Error(`Emergency exit. "${part}" "${restCommand}"`);
             }
         }
 

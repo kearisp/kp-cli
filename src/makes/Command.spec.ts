@@ -165,23 +165,22 @@ describe("Command.complete", () => {
     });
 
     it("Should predict option value", async (): Promise<void> => {
-        Logger.unmute();
-
         const command = (new Command("test"))
             .option("name", {
                 type: "string",
                 alias: "n",
                 description: "Test description"
             })
-            .completion("name", () => {
+            .option("arr", {
+                type: "string",
+                alias: "a",
+                description: "Array"
+            })
+            .completion("name", (input) => {
                 return ["foo", "bar"];
             });
 
-        // const res = await command.complete(["test", "-n="]);
-
-        // Logger.info(res);
-
-        expect(true).toEqual(true);
+        expect(await command.complete(["test", "-a=1", "-n", ""])).toEqual(["foo", "bar"]);
     });
 
     it("Should predict second argument depends on first", async (): Promise<void> => {
