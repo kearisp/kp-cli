@@ -140,7 +140,10 @@ export class Command {
 
         const parser = new Parser(parts);
 
-        for(const command of commands) {
+        for(let i = 0; i < commands.length; i++) {
+            const command = commands[i];
+            const nextCommand = commands[i + 1];
+
             if(parser.isSpread(command)) {
                 const name = parser.parseSpreadCommand(command);
 
@@ -167,6 +170,10 @@ export class Command {
             }
             else {
                 throw new InvalidError("Invalid command");
+            }
+
+            if(nextCommand && parser.isSpread(nextCommand)) {
+                continue;
             }
 
             while(parser.isOption()) {
@@ -339,7 +346,7 @@ export class Command {
                     });
 
                     if(completion) {
-                        let predicts: string[] = await completion.action(input);
+                        let predicts: string[] = (await completion.action(input));
 
                         const value = input.argument(predict) as string|string[];
 

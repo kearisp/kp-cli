@@ -1,6 +1,6 @@
 {
     "name": "@kearisp/cli",
-    "version": "2.0.4",
+    "version": "2.0.5",
     "license": "MIT",
     "author": "Kris Papercut <krispcut@gmail.com>",
     "description": "Command line interface for node.js",
@@ -20,13 +20,13 @@
     },
     "scripts": {
         "prepare": "npm run build",
-        "watch": "tsc --watch",
-        "watch:test": "KP_LOG=log jest --colors --watchAll",
-        "watch:test-cli": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
-        "watch:test-command": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",
-        "watch:test-parser": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Parser.spec.ts",
         "build": "tsc",
-        "test": "KP_LOG=none jest --colors"
+        "watch": "tsc --watch",
+        "test": "KP_LOG=none jest --colors",
+        "test-watch": "KP_LOG=log jest --colors --watchAll",
+        "test-watch:cli": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
+        "test-watch:command": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",
+        "test-watch:parser": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Parser.spec.ts"
     },
     "dependencies": {
         "os": "^0.1.2",
@@ -37,8 +37,8 @@
         "@types/node": "^20.12.7",
         "fs": "^0.0.1-security",
         "jest": "^29.7.0",
-        "ts-jest": "^29.1.2",
+        "ts-jest": "^29.2.5",
         "ts-node": "^10.9.2",
-        "typescript": "^5.4.5"
+        "typescript": "^5.6.2"
     }
 }
