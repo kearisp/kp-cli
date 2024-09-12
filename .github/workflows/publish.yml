@@ -37,3 +37,28 @@ jobs:
             env:
                 NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
             run: npm publish
+
+    dev-unpublish:
+        runs-on: ubuntu-latest
+        environment: publish
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          - name: Set up Node.js
+            uses: actions/setup-node@v4
+            with:
+                node-version: 20
+                registry-url: 'https://registry.npmjs.org'
+
+          - name: Unpublish previous dev versions
+            env:
+                NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+            run: |
+                PACKAGE_NAME=$(npm pkg get name | sed -e 's/^"//' -e 's/"$//')
+                PACKAGE_VERSION=$(npm pkg get version | sed -e 's/^"//' -e 's/"$//')
+                DEV_VERSIONS=$(npm view $PACKAGE_NAME versions --json | jq -r '.[]' | grep -E "$PACKAGE_VERSION-dev\.[0-9]+$")
+
+                for VERSION in $DEV_VERSIONS; do
+                    npm unpublish $PACKAGE_NAME@$VERSION --force
+                done
