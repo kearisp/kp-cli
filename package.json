@@ -22,7 +22,7 @@
         "prepare": "npm run build",
         "build": "tsc",
         "watch": "tsc --watch",
-        "test": "KP_LOG=none jest --colors",
+        "test": "KP_LOG=disable jest --colors",
         "test-watch": "KP_LOG=log jest --colors --watchAll",
         "test-watch:cli": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
         "test-watch:command": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",

@@ -52,8 +52,6 @@ describe("Command.parse", () => {
     });
 
     it("Should be parsed spread", async (): Promise<void> => {
-        Logger.unmute();
-
         const command = (new Command("config [...config]"));
 
         expect(command.parse(["config", "--test", "John", "-n=test"])).toEqual({
