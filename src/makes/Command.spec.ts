@@ -1,4 +1,4 @@
-import {expect, describe, it, beforeEach} from "@jest/globals";
+import {expect, describe, it, beforeEach, beforeAll} from "@jest/globals";
 
 import {InvalidError} from "../errors/InvalidError";
 import {Command} from "./Command";
@@ -6,7 +6,12 @@ import {Logger} from "./Logger";
 
 
 describe("Command.parse", () => {
+    beforeAll(() => {
+        Logger.mute();
+    });
+
     beforeEach(() => {
+        Logger.debug("-".repeat(15));
         Logger.mute();
     });
 
@@ -49,9 +54,9 @@ describe("Command.parse", () => {
     it("Should be parsed spread", async (): Promise<void> => {
         const command = (new Command("config [...config]"));
 
-        expect(command.parse(["config", "John", "-n=test"])).toEqual({
+        expect(command.parse(["config", "--test", "John", "-n=test"])).toEqual({
             _arguments: {
-                config: ["John", "-n=test"]
+                config: ["--test", "John", "-n=test"]
             },
             _options: {}
         });

@@ -121,7 +121,7 @@ export class Cli {
 
         this.name = Path.basename(scriptPath);
 
-        this.command(`complete [...args]`)
+        this.command(`complete [index] [prev] [command]`)
             .help({
                 description: "Generate completion script",
                 disabled: true
@@ -136,7 +136,8 @@ export class Cli {
                 type: "boolean"
             })
             .action(async (input): Promise<string> => {
-                const [index, prev, command] = input.argument("args") || [];
+                const index = input.argument("index");
+                const command = input.argument("command");
 
                 const parts = this.parseCommand(command, parseInt(index));
 
