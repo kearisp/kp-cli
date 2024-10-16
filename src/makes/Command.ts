@@ -469,6 +469,12 @@ export class Command {
                 parser.next();
             }
             else if(parser.isLast && parser.isCommand(command, true)) {
+                const partArguments = parser.getArguments(command);
+
+                for(const name in partArguments) {
+                    args[name] = partArguments[name];
+                }
+
                 return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
             }
             else {
@@ -540,7 +546,7 @@ export class Command {
                                     }
 
                                     return predict;
-                                });;
+                                });
                             }
 
                             options[option.name] = v;

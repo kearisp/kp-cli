@@ -3,15 +3,17 @@ name: Unpublish
 on:
     release:
         types:
-            - deleted
+          - deleted
 
 jobs:
     unpublish:
+        name: Unpublish version
+        if: ${{ github.repository_owner == 'kearisp' }}
         runs-on: ubuntu-latest
         environment: publish
         steps:
           - name: Checkout code
-            uses: actions/checkout@v3
+            uses: actions/checkout@v4
 
           - name: Set up Node.js
             uses: actions/setup-node@v4
@@ -25,4 +27,4 @@ jobs:
             run: |
                 PACKAGE_NAME=$(npm pkg get name | sed -e 's/^"//' -e 's/"$//')
                 PACKAGE_VERSION=$(npm pkg get version | sed -e 's/^"//' -e 's/"$//')
-                npm unpublish $PACKAGE_NAME@$PACKAGE_VERSION --force
+                npm unpublish $PACKAGE_NAME@$PACKAGE_VERSION --force 2>/dev/null || npm deprecate $PACKAGE_NAME@$PACKAGE_VERSION "This is the dev version. Why can't it be deleted?"
