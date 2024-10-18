@@ -16,17 +16,32 @@ elif type complete &>/dev/null; then
         local OPTIONS=$(${name} complete --compbash --compgen "$((COMP_CWORD - (nb_colon * 2)))" "$prev" "\${COMP_LINE}")
 
         COMPREPLY=()
-        STR=$(compgen -W "\${OPTIONS}" -- "$cur")
 
-        while IFS= read -r line; do
-            if [[ $cur != \\'* && $cur != \\"* ]]; then
-                line=$(echo \${line} | sed 's/ /\\\\ /g')
-            else
-                line="\\"$line\\""
-            fi
+        if [[ $OPTIONS = '__WOCKER_DIR_AND_FILE_PATH__' ]]; then
+            local files_and_dirs=($(compgen -f -d -- "$cur"))
 
-            COMPREPLY+=("$line")
-        done <<< "$STR"
+            for path in "\${files_and_dirs[@]}"; do
+                if [[ -d "$path" ]]; then
+                    COMPREPLY+=("\${path}/")
+                else
+                    COMPREPLY+=("$path")
+                fi
+            done
+
+            compopt -o nospace
+        else
+            STR=$(compgen -W "\${OPTIONS}" -- "$cur")
+
+            while IFS= read -r line; do
+                if [[ $cur != \\'* && $cur != \\"* ]]; then
+                    line=$(echo \${line} | sed 's/ /\\\\ /g')
+                else
+                    line="\\"$line\\""
+                fi
+
+                COMPREPLY+=("$line")
+            done <<< "$STR"
+        fi
 
         __ltrim_colon_completions "$cur"
     }
