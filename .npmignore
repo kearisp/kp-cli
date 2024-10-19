@@ -8,6 +8,9 @@
 /src
 /test
 
+# Testing
+/coverage
+
 # Builds
 /lib/tsconfig.tsbuildinfo
 

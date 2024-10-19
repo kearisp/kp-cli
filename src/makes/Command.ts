@@ -88,6 +88,12 @@ export class Command {
         });
     }
 
+    public setDescription(description: string) {
+        this._description = description;
+
+        return this;
+    }
+
     public help(params: HelpParams) {
         const {
             disabled= false,

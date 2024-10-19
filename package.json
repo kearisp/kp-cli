@@ -22,11 +22,11 @@
         "prepare": "npm run build",
         "build": "tsc",
         "watch": "tsc --watch",
-        "test": "KP_LOG=disable jest --colors",
-        "test-watch": "KP_LOG=log jest --colors --watchAll",
-        "test-watch:cli": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
-        "test-watch:command": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",
-        "test-watch:parser": "KP_LOG=log jest --colors --watchAll  --runTestsByPath ./src/makes/Parser.spec.ts"
+        "test": "KP_LOG=disable jest --colors --no-coverage",
+        "test-watch": "jest --colors --watchAll",
+        "test-watch:cli": "jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
+        "test-watch:command": "jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",
+        "test-watch:parser": "jest --colors --watchAll  --runTestsByPath ./src/makes/Parser.spec.ts"
     },
     "dependencies": {
         "os": "^0.1.2",

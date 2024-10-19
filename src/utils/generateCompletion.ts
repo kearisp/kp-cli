@@ -3,7 +3,7 @@ export const generateCompletion = (name: string): string => {
 
 if type compdef &>/dev/null; then
     _${name}_completion() {
-        compadd -- \`${name} complete --compzsh --compgen "\${CURRENT}" "\${words[CURRENT - 1]}" \${BUFFER}\`
+        compadd -- \`${name} complete --compzsh --compgen "\${CURRENT}" \${BUFFER}\`
     }
 
     compdef _${name}_completion ${name}
@@ -13,7 +13,7 @@ elif type complete &>/dev/null; then
         _get_comp_words_by_ref -n : cur prev
         nb_colon=$(grep -o ":" <<< "$COMP_LINE" | wc -l)
 
-        local OPTIONS=$(${name} complete --compbash --compgen "$((COMP_CWORD - (nb_colon * 2)))" "$prev" "\${COMP_LINE}")
+        local OPTIONS=$(${name} complete --compbash --compgen "$((COMP_CWORD - (nb_colon * 2)))" "\${COMP_LINE}")
 
         COMPREPLY=()
 
@@ -54,7 +54,7 @@ elif type compctl &>/dev/null; then
         read -cn cword
         read -l line
         si="$IFS"
-        if ! IFS=$'\n' reply=($(${name} complete --compzsh --compgen "\${cword}" "\${words[cword - 1]}" \${line})); then
+        if ! IFS=$'\n' reply=($(${name} complete --compzsh --compgen "\${cword}" \${line})); then
             local ret=$?
             IFS="$si"
             return $ret

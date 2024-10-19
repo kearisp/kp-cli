@@ -1,22 +1,22 @@
-import {Logger} from "../src/makes/Logger";
+import {Logger} from "../src";
 
 
-console.log = (...args: any[]) => {
+console.log = (...args: any[]): void => {
     Logger.log(...args);
 };
 
-console.info = (...args: any[]) => {
+console.info = (...args: any[]): void => {
     Logger.info(...args);
 };
 
-console.warn = (...args: any[]) => {
+console.warn = (...args: any[]): void => {
     Logger.warn(...args);
 };
 
-console.error = (...args: any[]) => {
+console.error = (...args: any[]): void => {
     Logger.error(...args);
 };
 
-console.debug = (...args) => {
+console.debug = (...args: any[]): void => {
     Logger.debug(...args);
 };
