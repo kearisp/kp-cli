@@ -1,16 +1,16 @@
-import {expect, describe, it, beforeEach, beforeAll} from "@jest/globals";
+import {expect, describe, it, afterEach, beforeAll} from "@jest/globals";
 
 import {InvalidError} from "../errors/InvalidError";
 import {Command} from "./Command";
 import {Logger} from "./Logger";
 
 
-describe("Command.parse", () => {
-    beforeAll(() => {
+describe("Command.parse", (): void => {
+    beforeAll((): void => {
         Logger.mute();
     });
 
-    beforeEach(() => {
+    afterEach((): void => {
         Logger.debug("-".repeat(15));
         Logger.mute();
     });
@@ -139,7 +139,7 @@ describe("Command.parse", () => {
     });
 });
 
-describe("Command.complete", () => {
+describe("Command.complete", (): void => {
     const command = (new Command("test [name]"))
         .option("name", {
             type: "string",
@@ -147,7 +147,12 @@ describe("Command.complete", () => {
         })
         .completion("name", () => ["foo", "bar"]);
 
-    beforeEach(() => {
+    beforeAll((): void => {
+        Logger.mute();
+    });
+
+    afterEach((): void => {
+        Logger.debug("-".repeat(15));
         Logger.mute();
     });
 
@@ -181,7 +186,7 @@ describe("Command.complete", () => {
                 alias: "a",
                 description: "Array"
             })
-            .completion("name", (input) => {
+            .completion("name", () => {
                 return ["foo", "bar"];
             });
 
@@ -247,5 +252,16 @@ describe("Command.complete", () => {
             });
 
         await command.complete(["test"]);
+    });
+
+    it("Should has current argument in input", async (): Promise<void> => {
+        const command = (new Command("<arg1> <arg2>"))
+            .completion("arg1", (input): string[] => {
+                expect(input.argument("arg1")).toBe("123");
+
+                return [];
+            });
+
+        await command.complete(["123"]);
     });
 });

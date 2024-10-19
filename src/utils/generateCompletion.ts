@@ -3,7 +3,7 @@ export const generateCompletion = (name: string): string => {
 
 if type compdef &>/dev/null; then
     _${name}_completion() {
-        compadd -- \`${name} complete --compzsh --compgen "\${CURRENT}" "\${words[CURRENT - 1]}" \${BUFFER}\`
+        compadd -- \`${name} complete --compzsh --compgen "\${CURRENT}" \${BUFFER}\`
     }
 
     compdef _${name}_completion ${name}
@@ -13,20 +13,35 @@ elif type complete &>/dev/null; then
         _get_comp_words_by_ref -n : cur prev
         nb_colon=$(grep -o ":" <<< "$COMP_LINE" | wc -l)
 
-        local OPTIONS=$(${name} complete --compbash --compgen "$((COMP_CWORD - (nb_colon * 2)))" "$prev" "\${COMP_LINE}")
+        local OPTIONS=$(${name} complete --compbash --compgen "$((COMP_CWORD - (nb_colon * 2)))" "\${COMP_LINE}")
 
         COMPREPLY=()
-        STR=$(compgen -W "\${OPTIONS}" -- "$cur")
 
-        while IFS= read -r line; do
-            if [[ $cur != \\'* && $cur != \\"* ]]; then
-                line=$(echo \${line} | sed 's/ /\\\\ /g')
-            else
-                line="\\"$line\\""
-            fi
+        if [[ $OPTIONS = '__WOCKER_DIR_AND_FILE_PATH__' ]]; then
+            local files_and_dirs=($(compgen -f -d -- "$cur"))
 
-            COMPREPLY+=("$line")
-        done <<< "$STR"
+            for path in "\${files_and_dirs[@]}"; do
+                if [[ -d "$path" ]]; then
+                    COMPREPLY+=("\${path}/")
+                else
+                    COMPREPLY+=("$path")
+                fi
+            done
+
+            compopt -o nospace
+        else
+            STR=$(compgen -W "\${OPTIONS}" -- "$cur")
+
+            while IFS= read -r line; do
+                if [[ $cur != \\'* && $cur != \\"* ]]; then
+                    line=$(echo \${line} | sed 's/ /\\\\ /g')
+                else
+                    line="\\"$line\\""
+                fi
+
+                COMPREPLY+=("$line")
+            done <<< "$STR"
+        fi
 
         __ltrim_colon_completions "$cur"
     }
@@ -39,7 +54,7 @@ elif type compctl &>/dev/null; then
         read -cn cword
         read -l line
         si="$IFS"
-        if ! IFS=$'\n' reply=($(${name} complete --compzsh --compgen "\${cword}" "\${words[cword - 1]}" \${line})); then
+        if ! IFS=$'\n' reply=($(${name} complete --compzsh --compgen "\${cword}" \${line})); then
             local ret=$?
             IFS="$si"
             return $ret

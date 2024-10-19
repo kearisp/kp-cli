@@ -139,6 +139,8 @@ cli.command("completion script")
     });
 ```
 
+#### Bash completion
+
 ```shell
 source <(your-script.js completion script)
 ```

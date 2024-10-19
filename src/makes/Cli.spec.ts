@@ -2,8 +2,8 @@ import {expect, describe, it, beforeEach} from "@jest/globals";
 import * as OS from "os";
 // import * as assert from "assert";
 
-import {Logger} from "./Logger";
-import {Cli} from "./Cli";
+import {Logger} from "..";
+import {Cli} from "..";
 
 
 describe("Cli.run", () => {
@@ -73,14 +73,17 @@ describe("Cli.run", () => {
                 return input.argument("name");
             });
 
-        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "1", "process", "cli proc"]))
+        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "1", "cli proc"]))
             .toEqual("process");
 
-        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "1", "cli", "cli "]))
+        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "1", "cli "]))
             .toEqual(["init", "start", "process"].join(OS.EOL));
 
-        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "2", "cli", "cli start -"]))
+        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "2", "cli start -"]))
             .toEqual(["-f", "--foo"].join(OS.EOL));
+
+        expect(await cli.run(["node", "cli", "complete", "--compbash", "--compgen", "2", "ws start --foo "]))
+            .toEqual("");
     });
 
     it("Should be help", async (): Promise<void> => {

@@ -11,7 +11,7 @@ export class Cli {
     protected name: string;
     protected commands: Command[] = [];
 
-    public completionScript() {
+    public completionScript(): string {
         return generateCompletion(this.name);
     }
 
@@ -121,7 +121,7 @@ export class Cli {
 
         this.name = Path.basename(scriptPath);
 
-        this.command(`complete [index] [prev] [command]`)
+        this.command("complete [index] [command]")
             .help({
                 description: "Generate completion script",
                 disabled: true

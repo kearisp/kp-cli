@@ -88,6 +88,12 @@ export class Command {
         });
     }
 
+    public setDescription(description: string) {
+        this._description = description;
+
+        return this;
+    }
+
     public help(params: HelpParams) {
         const {
             disabled= false,
@@ -469,6 +475,12 @@ export class Command {
                 parser.next();
             }
             else if(parser.isLast && parser.isCommand(command, true)) {
+                const partArguments = parser.getArguments(command);
+
+                for(const name in partArguments) {
+                    args[name] = partArguments[name];
+                }
+
                 return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
             }
             else {
@@ -540,7 +552,7 @@ export class Command {
                                     }
 
                                     return predict;
-                                });;
+                                });
                             }
 
                             options[option.name] = v;
