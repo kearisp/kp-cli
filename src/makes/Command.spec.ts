@@ -17,6 +17,7 @@ describe("Command.parse", (): void => {
 
     it("Should be parsed", async (): Promise<void> => {
         const command = (new Command("test [name]"))
+            .setDescription("Test description")
             .help({
                 description: "Test description"
             })
@@ -25,21 +26,15 @@ describe("Command.parse", (): void => {
                 alias: "n"
             });
 
-        expect(command.parse(["test", "John"])).toEqual({
-            _arguments: {
-                name: "John"
-            },
-            _options: {}
-        });
+        let input = command.parse(["test", "John"]);
 
-        expect(command.parse(["test", "John", "-n=test"])).toEqual({
-            _arguments: {
-                name: "John"
-            },
-            _options: {
-                name: "test"
-            }
-        });
+        expect(input.argument("name")).toBe("John");
+        expect(input.options()).toEqual([]);
+
+        input = command.parse(["test", "John", "-n=test"]);
+
+        expect(input.argument("name")).toBe("John");
+        expect(input.option("name")).toBe("test");
     });
 
     it("Should be parsed without optional argument", async () => {
@@ -47,7 +42,7 @@ describe("Command.parse", (): void => {
 
         expect(command.parse(["use"])).toEqual({
             _arguments: {},
-            _options: {}
+            _options: []
         });
     });
 
@@ -58,7 +53,7 @@ describe("Command.parse", (): void => {
             _arguments: {
                 config: ["--test", "John", "-n=test"]
             },
-            _options: {}
+            _options: []
         });
     });
 
@@ -80,28 +75,31 @@ describe("Command.parse", (): void => {
         expect(command.parse(["cli", "-fb"]))
             .toEqual({
                 _arguments: {},
-                _options: {
-                    foo: true,
-                    bar: true
-                }
+                _options: [
+                    {name: "foo", value: true},
+                    {name: "bar", value: true}
+                ]
             });
 
         expect(command.parse(["cli", "-bf"]))
             .toEqual({
                 _arguments: {},
-                _options: {
-                    foo: true,
-                    bar: true
-                }
+                _options: [
+                    {name: "bar", value: true},
+                    {name: "foo", value: true}
+                ]
             });
 
-        expect(command.parse(["cli", "-bffbbfbbfbbfbfbfff"]))
+        Logger.unmute();
+        Logger.info(command.parse(["cli", "-bff"]));
+        expect(command.parse(["cli", "-bff"]))
             .toEqual({
                 _arguments: {},
-                _options: {
-                    foo: true,
-                    bar: true
-                }
+                _options: [
+                    {name: "bar", value: true},
+                    {name: "foo", value: true},
+                    {name: "foo", value: true}
+                ]
             });
     });
 
@@ -119,9 +117,9 @@ describe("Command.parse", (): void => {
             _arguments: {
                 name: "test"
             },
-            _options: {
-                help: true
-            }
+            _options: [
+                {name: "help", value: true}
+            ]
         });
     });
 
@@ -136,6 +134,30 @@ describe("Command.parse", (): void => {
         catch(err) {
             expect(err).toBeInstanceOf(InvalidError);
         }
+    });
+
+    it("Should be options", async (): Promise<void> => {
+        const command = new Command("command")
+            .option("name", {
+                type: "string",
+                alias: "n"
+            })
+            .option("description", {
+                type: "string",
+                // array: true,
+                alias: "d"
+            });
+
+        const input = command.parse([
+            "command",
+            "-n=test1", "-n=test2", "-n=test3",
+            "-d=desc1", "-d=desc2"
+        ]);
+
+        expect(input.options("name")).toEqual(["test1", "test2", "test3"]);
+        expect(input.option("description")).toBe("desc1");
+        expect(input.options("test")).toEqual([]);
+        expect(input.option("test")).toBeUndefined();
     });
 });
 
@@ -219,6 +241,8 @@ describe("Command.complete", (): void => {
     });
 
     it("Should throw error on command", async (): Promise<void> => {
+         const command = new Command("test [name]");
+
         try {
             await command.complete(["lest", "lol"]);
 

@@ -1,6 +1,6 @@
 {
     "name": "@kearisp/cli",
-    "version": "2.0.6",
+    "version": "2.0.7",
     "license": "MIT",
     "author": "Kris Papercut <krispcut@gmail.com>",
     "description": "Command line interface for node.js",
@@ -23,7 +23,7 @@
         "build": "tsc",
         "watch": "tsc --watch",
         "test": "KP_LOG=disable jest --colors --no-coverage",
-        "test-watch": "jest --colors --watchAll",
+        "test-watch": "jest --colors --coverage --no-cache --watchAll",
         "test-watch:cli": "jest --colors --watchAll  --runTestsByPath ./src/makes/Cli.spec.ts",
         "test-watch:command": "jest --colors --watchAll  --runTestsByPath ./src/makes/Command.spec.ts",
         "test-watch:parser": "jest --colors --watchAll  --runTestsByPath ./src/makes/Parser.spec.ts"
@@ -33,12 +33,12 @@
         "path": "^0.12.7"
     },
     "devDependencies": {
-        "@types/jest": "^29.5.12",
+        "@types/jest": "^29.5.14",
         "@types/node": "^20.12.7",
         "fs": "^0.0.1-security",
         "jest": "^29.7.0",
         "ts-jest": "^29.2.5",
         "ts-node": "^10.9.2",
-        "typescript": "^5.6.2"
+        "typescript": "^5.6.3"
     }
 }
