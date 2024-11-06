@@ -142,21 +142,10 @@ export class Command {
         for(let i = 0; i < commands.length; i++) {
             const command = commands[i];
             const nextCommand = commands[i + 1];
+            let spread = false;
 
             if(parser.isSpread(command)) {
-                const name = parser.parseSpreadCommand(command);
-
-                const values: string[] = [];
-
-                while(!parser.eol) {
-                    values.push(parser.part);
-
-                    parser.next();
-                }
-
-                args[name] = values;
-
-                parser.next();
+                spread = true;
             }
             else if(parser.isCommand(command)) {
                 const res = parser.getArguments(command);
@@ -250,6 +239,22 @@ export class Command {
                         }
                     });
                 }
+
+                parser.next();
+            }
+
+            if(spread) {
+                const name = parser.parseSpreadCommand(command);
+
+                const values: string[] = [];
+
+                while(!parser.eol) {
+                    values.push(parser.part);
+
+                    parser.next();
+                }
+
+                args[name] = values;
 
                 parser.next();
             }
