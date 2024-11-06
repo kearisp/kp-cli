@@ -49,9 +49,9 @@ describe("Command.parse", (): void => {
     it("Should be parsed spread", async (): Promise<void> => {
         const command = (new Command("config [...config]"));
 
-        expect(command.parse(["config", "--test", "John", "-n=test"])).toEqual({
+        expect(command.parse(["config", "John", "--test", "-n=test"])).toEqual({
             _arguments: {
-                config: ["--test", "John", "-n=test"]
+                config: ["John", "--test", "-n=test"]
             },
             _options: []
         });
