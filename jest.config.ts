@@ -38,7 +38,7 @@ const config: Config.InitialOptionsWithRootDir = {
     // ],
 
     // Indicates which provider should be used to instrument code for coverage
-    // coverageProvider: "babel",
+    coverageProvider: "v8",
 
     // A list of reporter names that Jest uses when writing coverage reports
     // coverageReporters: [
@@ -138,9 +138,9 @@ const config: Config.InitialOptionsWithRootDir = {
     //     "<rootDir>/test/index.ts"
     // ],
 
-    // transform: {
-    //     "^.+\\.(t|j)s$": "babel-jest"
-    // },
+    transform: {
+        "^.+\\.(t|j)s$": "ts-jest"
+    },
     moduleNameMapper: {
         "^src/(.*)": "<rootDir>/src/$1"
     },

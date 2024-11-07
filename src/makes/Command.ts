@@ -1,6 +1,6 @@
 import * as OS from "os";
 
-import {Option, Param} from "../types";
+import {Option, OptionValue, Param} from "../types";
 import {escapeRegExp} from "../utils";
 import {InvalidError} from "../errors/InvalidError";
 import {Parser} from "./Parser";
@@ -30,6 +30,9 @@ export class Command {
     protected _help: boolean;
     protected _description: string;
     protected _options: Option[] = [];
+    protected __options: {
+        [name: string]: OptionParams;
+    } = {};
     protected _action: Action;
     protected _completions: Completion[] = [];
 
@@ -42,18 +45,8 @@ export class Command {
         return this._command;
     }
 
-    protected getCommandInput(args: any, options: any): CommandInput {
-        const _this = this;
-
-        return new class extends CommandInput {
-            protected getParamSettings(): Param[] {
-                return [];
-            }
-
-            protected getOptionSettings(): Option[] {
-                return _this._options;
-            }
-        }(args, options);
+    protected getCommandInput(params: any, optionValues: OptionValue[] = []): CommandInput {
+        return new CommandInput(params, optionValues);
     }
 
     public option(name: string, params: OptionParams) {
@@ -78,6 +71,8 @@ export class Command {
                 ...rest
             }
         ];
+
+        this.__options[name] = params;
 
         return this;
     }
@@ -140,30 +135,17 @@ export class Command {
         const args: {
             [name: string]: string | boolean | number | string[];
         } = {};
-        const options: {
-            [name: string]: string | boolean | number;
-        } = {};
+        const optionValues: OptionValue[] = [];
 
         const parser = new Parser(parts);
 
         for(let i = 0; i < commands.length; i++) {
             const command = commands[i];
             const nextCommand = commands[i + 1];
+            let spread = false;
 
             if(parser.isSpread(command)) {
-                const name = parser.parseSpreadCommand(command);
-
-                const values: string[] = [];
-
-                while(!parser.eol) {
-                    values.push(parser.part);
-
-                    parser.next();
-                }
-
-                args[name] = values;
-
-                parser.next();
+                spread = true;
             }
             else if(parser.isCommand(command)) {
                 const res = parser.getArguments(command);
@@ -191,17 +173,26 @@ export class Command {
                     if(option) {
                         switch(option.type) {
                             case "boolean":
-                                options[option.name] = true;
+                                optionValues.push({
+                                    name: option.name,
+                                    value: true
+                                });
                                 break;
 
                             case "number":
                                 parser.next();
-                                options[option.name] = parseFloat(parser.part);
+                                optionValues.push({
+                                    name: option.name,
+                                    value: parseFloat(parser.part)
+                                });
                                 break;
 
                             case "string":
                                 parser.next();
-                                options[option.name] = parser.part;
+                                optionValues.push({
+                                    name: option.name,
+                                    value: parser.part
+                                });
                                 break;
                         }
                     }
@@ -214,15 +205,24 @@ export class Command {
                     if(option) {
                         switch(option.type) {
                             case "boolean":
-                                options[option.name] = true;
+                                optionValues.push({
+                                    name: option.name,
+                                    value: true
+                                });
                                 break;
 
                             case "number":
-                                options[option.name] = parseFloat(value);
+                                optionValues.push({
+                                    name: option.name,
+                                    value: parseFloat(value)
+                                });
                                 break;
 
                             case "string":
-                                options[option.name] = value;
+                                optionValues.push({
+                                    name: option.name,
+                                    value
+                                });
                                 break;
                         }
                     }
@@ -232,10 +232,29 @@ export class Command {
                         const option = this.getOptionSettings(undefined, alias);
 
                         if(option && option.type === "boolean") {
-                            options[option.name] = true;
+                            optionValues.push({
+                                name: option.name,
+                                value: true
+                            });
                         }
                     });
                 }
+
+                parser.next();
+            }
+
+            if(spread) {
+                const name = parser.parseSpreadCommand(command);
+
+                const values: string[] = [];
+
+                while(!parser.eol) {
+                    values.push(parser.part);
+
+                    parser.next();
+                }
+
+                args[name] = values;
 
                 parser.next();
             }
@@ -245,7 +264,7 @@ export class Command {
             throw new InvalidError("Haven't ended");
         }
 
-        return this.getCommandInput(args, options);
+        return this.getCommandInput(args, optionValues);
     }
 
     public async emit(name: string, input: CommandInput): Promise<string> {
@@ -447,6 +466,7 @@ export class Command {
 
         const args: any = {};
         const options: any = {};
+        const optionValues: OptionValue[] = [];
 
         for(const command of commands) {
             if(parser.isSpread(command)) {
@@ -463,7 +483,7 @@ export class Command {
 
                 args[name] = value;
 
-                return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
+                return this.predictCommand(command, parser.part, this.getCommandInput(args, optionValues));
             }
             else if(!parser.isLast && parser.isCommand(command)) {
                 const partArguments = parser.getArguments(command);
@@ -481,7 +501,7 @@ export class Command {
                     args[name] = partArguments[name];
                 }
 
-                return this.predictCommand(command, parser.part, this.getCommandInput(args, options));
+                return this.predictCommand(command, parser.part, this.getCommandInput(args, optionValues));
             }
             else {
                 throw new InvalidError("Error");
@@ -519,6 +539,10 @@ export class Command {
                     switch(option.type) {
                         case "boolean":
                             options[option.name] = true;
+                            optionValues.push({
+                                name: option.name,
+                                value: true
+                            });
                             break;
 
                         case "string":
@@ -544,7 +568,7 @@ export class Command {
                                     return [];
                                 }
 
-                                const predicts = await completion.action(this.getCommandInput(args, options));
+                                const predicts = await completion.action(this.getCommandInput(args, optionValues));
 
                                 return predicts.map((predict): string => {
                                     if(sign === "=") {
@@ -556,6 +580,10 @@ export class Command {
                             }
 
                             options[option.name] = v;
+                            optionValues.push({
+                                name: option.name,
+                                value: v
+                            });
                             break;
                     }
                 }
