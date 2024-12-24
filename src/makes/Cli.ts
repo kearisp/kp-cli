@@ -1,7 +1,8 @@
 import * as OS from "os";
 import * as Path from "path";
-import {InvalidError} from "../errors/InvalidError";
 
+import {CommandNotFoundError} from "../errors/CommandNotFoundError";
+import {InvalidError} from "../errors/InvalidError";
 import {Command} from "./Command";
 import {Logger} from "./Logger";
 import {generateCompletion} from "../utils";
@@ -93,7 +94,7 @@ export class Cli {
             }
         }
 
-        throw new Error("Invalid command");
+        throw new CommandNotFoundError();
     }
 
     protected async complete(parts: string[]): Promise<string[]> {
