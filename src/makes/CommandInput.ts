@@ -1,5 +1,6 @@
 import {
     Param,
+    ParamValue,
     Option,
     OptionValue
 } from "../types";
@@ -7,20 +8,27 @@ import {
 
 export class CommandInput {
     public constructor(
-        protected readonly _arguments: any,
-        protected readonly _options: OptionValue[]
+        protected readonly _arguments: ParamValue[],
+        protected readonly _options: OptionValue[],
+        public readonly processed: boolean = true,
     ) {}
 
-    public argument(key: string): string|undefined {
-        if(key in this._arguments) {
-            return this._arguments[key];
+    public argument(name: string): undefined | string {
+        const paramValue = this._arguments.find((param) => param.name === name);
+
+        if(!paramValue) {
+            return undefined;
         }
 
-        return undefined;
+        return paramValue.value;
     }
 
-    public arguments(): any {
-        return this._arguments;
+    public arguments(name: string): string[] {
+        return this._arguments.filter((param) => {
+            return param.name === name;
+        }).map((param) => {
+            return param.value;
+        });
     }
 
     public option(key: string, defaultValue?: any): any {
@@ -35,9 +43,9 @@ export class CommandInput {
         return optionValue.value;
     }
 
-    public options(key?: string): any[] {
+    public options(name: string): any[] {
         return this._options.filter((option) => {
-            return option.name === key;
+            return option.name === name;
         }).map((option) => {
             return option.value;
         });

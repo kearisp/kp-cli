@@ -1,3 +1,4 @@
+import {Logger} from "../makes/Logger";
 import {escapeRegExp} from "../utils";
 
 
@@ -64,9 +65,9 @@ export class Parser {
             return true;
         }
 
-        return regOption.test(this.part) ||
-            regOptionWithValue.test(this.part) ||
-            regShortMultipleOption.test(this.part);
+        return regOption.test(this.part)
+            || regOptionWithValue.test(this.part)
+            || regShortMultipleOption.test(this.part);
     }
 
     public isRegOption() {
@@ -143,7 +144,7 @@ export class Parser {
         return partRegex.exec(this.part);
     }
 
-    protected parse(part: string) {
+    public parse(part: string) {
         let restCommand = part,
             names: string[] = [],
             resReg = "",
@@ -156,7 +157,6 @@ export class Parser {
             if(comAttrReq.test(restCommand)) {
                 const [, name, rest] = comAttrReq.exec(restCommand);
 
-                // console.warn(name, rest);
                 names.push(name);
                 stepReg = "(.+?)";
                 restCommand = rest;
@@ -164,7 +164,6 @@ export class Parser {
             else if(comAttrOpt.test(restCommand)) {
                 const [, name, rest] = comAttrOpt.exec(restCommand);
 
-                // console.warn(name, rest);
                 names.push(name);
                 stepReg = "(.+?)?";
                 restCommand = rest;

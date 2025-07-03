@@ -1,13 +1,15 @@
+export type OptionType = boolean | string | number;
+
 export type Option = {
     name: string;
+    alias?: string;
     type: "boolean" | "number" | "string";
     help?: boolean;
-    alias?: string;
     description?: string;
-    default?: boolean | string | number;
+    default?: OptionType;
 };
 
 export type OptionValue = {
     name: string;
-    value: boolean | string | number;
+    value: OptionType;
 };

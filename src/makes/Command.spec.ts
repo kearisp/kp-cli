@@ -1,6 +1,5 @@
 import {expect, describe, it, afterEach, beforeAll} from "@jest/globals";
-
-import {InvalidError} from "../errors/InvalidError";
+import {InvalidError} from "../errors";
 import {Command} from "./Command";
 import {Logger} from "./Logger";
 
@@ -15,7 +14,7 @@ describe("Command.parse", (): void => {
         Logger.mute();
     });
 
-    it("Should be parsed", async (): Promise<void> => {
+    it("should be parsed", async (): Promise<void> => {
         const command = (new Command("test [name]"))
             .setDescription("Test description")
             .help({
@@ -29,7 +28,7 @@ describe("Command.parse", (): void => {
         let input = command.parse(["test", "John"]);
 
         expect(input.argument("name")).toBe("John");
-        expect(input.options()).toEqual([]);
+        expect(input.options("name")).toEqual([]);
 
         input = command.parse(["test", "John", "-n=test"]);
 
@@ -37,27 +36,56 @@ describe("Command.parse", (): void => {
         expect(input.option("name")).toBe("test");
     });
 
-    it("Should be parsed without optional argument", async () => {
+    // it("should parse with missing required argument", async (): Promise<void> => {
+    //     const command = (new Command("test <foo>"));
+    //
+    //     let input = command.parse(["test"]);
+    //
+    // });
+
+    it("should be parsed without optional argument", async (): Promise<void> => {
         const command = (new Command("use [name]"));
 
         expect(command.parse(["use"])).toEqual({
-            _arguments: {},
-            _options: []
+            _arguments: [],
+            _options: [],
+            processed: true
         });
     });
 
-    it("Should be parsed spread", async (): Promise<void> => {
+    it("should be parsed spread", async (): Promise<void> => {
         const command = (new Command("config [...config]"));
 
         expect(command.parse(["config", "John", "--test", "-n=test"])).toEqual({
-            _arguments: {
-                config: ["John", "--test", "-n=test"]
-            },
-            _options: []
+            _arguments: [
+                {name: "config", value: "John"},
+                {name: "config", value: "--test"},
+                {name: "config", value: "-n=test"}
+            ],
+            _options: [],
+            processed: true
         });
     });
 
-    it("Should be parsed multiple options", async (): Promise<void> => {
+    it("should parse spread with options", async (): Promise<void> => {
+        const command = (new Command("config [...rest]"))
+            .option("force", {
+                type: "boolean",
+                alias: "f"
+            });
+
+        expect(command.parse(["config", "-f", "foo"])).toEqual({
+            _arguments: [
+                {name: "rest", value: "foo"},
+            ],
+            _options: [
+                {name: "force", value: true}
+            ],
+            processed: true
+        });
+    });
+
+    it("should be parsed multiple options", async (): Promise<void> => {
         const command = (new Command("cli"))
             .option("foo", {
                 type: "boolean",
@@ -74,36 +102,37 @@ describe("Command.parse", (): void => {
 
         expect(command.parse(["cli", "-fb"]))
             .toEqual({
-                _arguments: {},
+                _arguments: [],
                 _options: [
                     {name: "foo", value: true},
                     {name: "bar", value: true}
-                ]
+                ],
+                processed: true
             });
 
         expect(command.parse(["cli", "-bf"]))
             .toEqual({
-                _arguments: {},
+                _arguments: [],
                 _options: [
                     {name: "bar", value: true},
                     {name: "foo", value: true}
-                ]
+                ],
+                processed: true
             });
 
-        Logger.unmute();
-        Logger.info(command.parse(["cli", "-bff"]));
         expect(command.parse(["cli", "-bff"]))
             .toEqual({
-                _arguments: {},
+                _arguments: [],
                 _options: [
                     {name: "bar", value: true},
                     {name: "foo", value: true},
                     {name: "foo", value: true}
-                ]
+                ],
+                processed: true
             });
     });
 
-    it("Should be help", async (): Promise<void> => {
+    it("should be help", async (): Promise<void> => {
         const command = (new Command("test [name]"))
             .help({
                 description: "Test description"
@@ -114,30 +143,28 @@ describe("Command.parse", (): void => {
             });
 
         expect(command.parse(["test", "test", "--help"])).toEqual({
-            _arguments: {
-                name: "test"
-            },
+            _arguments: [
+                {name: "name", value: "test"}
+            ],
             _options: [
                 {name: "help", value: true}
-            ]
+            ],
+            processed: true
         });
     });
 
-    it("Should be error without required argument", async (): Promise<void> => {
+    it("should be parsed without required argument", async (): Promise<void> => {
         const command = new Command("use <name>");
 
-        try {
-            command.parse(["use"]);
-
-            throw new Error("Completed successfully");
-        }
-        catch(err) {
-            expect(err).toBeInstanceOf(InvalidError);
-        }
+        expect(command.parse(["use"])).toEqual({
+            _arguments: [],
+            _options: [],
+            processed: false
+        });
     });
 
-    it("Should be options", async (): Promise<void> => {
-        const command = new Command("command")
+    it("should be options", async (): Promise<void> => {
+        const command = new Command("command <name>")
             .option("name", {
                 type: "string",
                 alias: "n"
@@ -151,9 +178,11 @@ describe("Command.parse", (): void => {
         const input = command.parse([
             "command",
             "-n=test1", "-n=test2", "-n=test3",
-            "-d=desc1", "-d=desc2"
+            "-d=desc1", "-d=desc2",
+            "test-value"
         ]);
 
+        expect(input.argument("name")).toEqual("test-value");
         expect(input.options("name")).toEqual(["test1", "test2", "test3"]);
         expect(input.option("description")).toBe("desc1");
         expect(input.options("test")).toEqual([]);
@@ -178,25 +207,25 @@ describe("Command.complete", (): void => {
         Logger.mute();
     });
 
-    it("Should predict first command", async (): Promise<void> => {
+    it("should predict first command", async (): Promise<void> => {
         const res = await command.complete(["te"]);
 
         expect(res).toEqual(["test"]);
     });
 
-    it("Should predict optional argument", async (): Promise<void> => {
+    it("should predict optional argument", async (): Promise<void> => {
         const res = await command.complete(["test", ""]);
 
         expect(res).toEqual(["foo", "bar"]);
     });
 
-    it("Should predict option name", async (): Promise<void> => {
+    it("should predict option name", async (): Promise<void> => {
         const res = await command.complete(["test", "foo", "-"]);
 
         expect(res).toEqual(["-n", "--name"])
     });
 
-    it("Should predict option value", async (): Promise<void> => {
+    it("should predict option value", async (): Promise<void> => {
         const command = (new Command("test"))
             .option("name", {
                 type: "string",
@@ -215,10 +244,10 @@ describe("Command.complete", (): void => {
         expect(await command.complete(["test", "-a=1", "-n", ""])).toEqual(["foo", "bar"]);
     });
 
-    it("Should predict second argument depends on first", async (): Promise<void> => {
+    it("should predict second argument depends on first", async (): Promise<void> => {
         const command = (new Command("[arg1] [arg2]"))
             .completion("arg2", (input) => {
-                if(input.argument("arg1") === "foo") {
+                if (input.argument("arg1") === "foo") {
                     return ["right"];
                 }
 
@@ -230,41 +259,30 @@ describe("Command.complete", (): void => {
         expect(res).toEqual(["right"]);
     });
 
-    it("Should predict spread", async (): Promise<void> => {
+    it("should predict spread", async (): Promise<void> => {
         const command = (new Command("[...name]"))
             .completion("name", () => {
                 return ["foo", "bar"];
             });
 
         expect(await command.complete([""])).toEqual(["foo", "bar"]);
+
+        Logger.unmute();
+
         expect(await command.complete(["foo", ""])).toEqual(["bar"]);
     });
 
-    it("Should throw error on command", async (): Promise<void> => {
-         const command = new Command("test [name]");
+    it("should throw error on command", async (): Promise<void> => {
+        const command = new Command("test [name]");
 
-        try {
-            await command.complete(["lest", "lol"]);
-
-            throw Error("Completed successfully");
-        }
-        catch(err) {
-            expect(err).toBeInstanceOf(InvalidError);
-        }
+        await expect(command.complete(["lest", "lol"])).rejects.toBeInstanceOf(InvalidError);
     });
 
-    it("Should throw error on option", async (): Promise<void> => {
-        try {
-            await command.complete(["test", "foo", "--no"]);
-
-            throw new Error("Completed successfully");
-        }
-        catch(err) {
-            expect(err).toBeInstanceOf(Error);
-        }
+    it("should return an empty array if the option is not found", async (): Promise<void> => {
+        await expect(command.complete(["test", "foo", "--no"])).resolves.toEqual([]);
     });
 
-    it("Should has argument in input", async (): Promise<void> => {
+    it("should has argument in input", async (): Promise<void> => {
         const command = (new Command("[arg1] [arg2]"))
             .completion("arg1", () => {
                 return ["test"];
@@ -278,7 +296,7 @@ describe("Command.complete", (): void => {
         await command.complete(["test"]);
     });
 
-    it("Should has current argument in input", async (): Promise<void> => {
+    it("should has current argument in input", async (): Promise<void> => {
         const command = (new Command("<arg1> <arg2>"))
             .completion("arg1", (input): string[] => {
                 expect(input.argument("arg1")).toBe("123");

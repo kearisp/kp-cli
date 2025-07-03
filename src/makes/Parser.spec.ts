@@ -1,12 +1,11 @@
 import {expect, describe, it} from "@jest/globals";
-
 import {Parser} from "./Parser";
 
 
-describe("Parser.next", () => {
+describe("Parser.next", (): void => {
     const parser = new Parser(["foo", "bar"]);
 
-    it("Should correctly progress through parts", () => {
+    it("Should correctly progress through parts", (): void => {
         expect(parser.part).toBe("foo");
         parser.next();
         expect(parser.part).toBe("bar");
@@ -15,7 +14,7 @@ describe("Parser.next", () => {
     });
 });
 
-describe("Parser.isCommand", () => {
+describe("Parser.isCommand", (): void => {
     const parser = new Parser(["test"]);
 
     it("Should validate command", () => {

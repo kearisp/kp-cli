@@ -1,11 +1,11 @@
 import * as OS from "os";
 import * as Path from "path";
-
-import {CommandNotFoundError} from "../errors/CommandNotFoundError";
-import {InvalidError} from "../errors/InvalidError";
 import {Command} from "./Command";
+import {CommandBuilder} from "./CommandBuilder";
 import {Logger} from "./Logger";
+import {CommandNotFoundError, InvalidError} from "../errors";
 import {generateCompletion} from "../utils";
+import {CommandInput} from "./CommandInput";
 
 
 export class Cli {
@@ -66,10 +66,8 @@ export class Cli {
         return args.length < index ? [...args, ""] : args;
     }
 
-    public command(name: string): Command {
-        let command = this.commands.find((command) => {
-            return command.name === name;
-        });
+    public command(name: string): CommandBuilder {
+        let command = this.commands.find((command) => command.definition === name);
 
         if(!command) {
             command = new Command(name);
@@ -77,13 +75,20 @@ export class Cli {
             this.commands.push(command);
         }
 
-        return command;
+        return new CommandBuilder(this, command);
     }
 
     protected async process(parts: string[]): Promise<string> {
+        const unprocessed = new Map<Command, CommandInput>();
+
         for(const command of this.commands) {
             try {
                 const input = command.parse(parts);
+
+                if(!input.processed) {
+                    unprocessed.set(command, input);
+                    continue;
+                }
 
                 return command.emit(this.name, input);
             }
@@ -91,6 +96,12 @@ export class Cli {
                 if(!(err instanceof InvalidError)) {
                     Logger.error(err.message);
                 }
+            }
+        }
+
+        for(const [command, input] of unprocessed.entries()) {
+            if(input.option("help")) {
+                return command.emit(this.name, input);
             }
         }
 
@@ -123,10 +134,6 @@ export class Cli {
         this.name = Path.basename(scriptPath);
 
         this.command("complete [index] [command]")
-            .help({
-                description: "Generate completion script",
-                disabled: true
-            })
             .option("compbash", {
                 type: "boolean"
             })
@@ -136,13 +143,15 @@ export class Cli {
             .option("compzsh", {
                 type: "boolean"
             })
+            .help({
+                disabled: true,
+                description: "Generate completion script"
+            })
             .action(async (input): Promise<string> => {
-                const index = input.argument("index");
-                const command = input.argument("command");
-
-                const parts = this.parseCommand(command, parseInt(index));
-
-                const res = await this.complete(parts);
+                const index = input.argument("index"),
+                      command = input.argument("command"),
+                      parts = this.parseCommand(command, parseInt(index)),
+                      res = await this.complete(parts);
 
                 return res
                     .map((predict) => {

@@ -41,12 +41,12 @@ const config: Config.InitialOptionsWithRootDir = {
     coverageProvider: "v8",
 
     // A list of reporter names that Jest uses when writing coverage reports
-    // coverageReporters: [
-    //     "json",
-    //     "text",
-    //     "lcov",
-    //     "clover"
-    // ],
+    coverageReporters: [
+        "text-summary",
+        "lcovonly",
+        "json-summary",
+        "html"
+    ],
 
     // An object that configures minimum threshold enforcement for coverage results
     // coverageThreshold: undefined,
@@ -121,17 +121,17 @@ const config: Config.InitialOptionsWithRootDir = {
     // restoreMocks: false,
 
     // The root directory that Jest should scan for tests and modules within
-    rootDir: __dirname,
+    rootDir: import.meta.dirname,
 
     // A list of paths to directories that Jest should use to search for files in
     roots: [
         "<rootDir>/src",
-        // "<rootDir>/test"
+        "<rootDir>/test"
     ],
 
     // The paths to modules that run some code to configure or set up the testing environment before each test
     setupFiles: [
-        "<rootDir>/test/index.ts"
+        "<rootDir>/test/setup.ts"
     ],
     // A list of paths to modules that run some code to configure or set up the testing framework before each test
     // setupFilesAfterEnv: [
