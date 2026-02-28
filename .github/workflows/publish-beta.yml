@@ -1,4 +1,4 @@
-name: Publish beta
+name: Beta
 
 on:
     pull_request:
@@ -17,50 +17,8 @@ on:
           - submitted
 
 jobs:
-    test:
-        name: Test
-        runs-on: ubuntu-latest
-        environment: test
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v4
-
-          - name: Set up Node.js
-            uses: actions/setup-node@v4
-            with:
-                node-version: 22
-                registry-url: 'https://registry.npmjs.org'
-
-          - name: Setup version
-            run: |
-                PACKAGE_NAME=$(npm pkg get name | sed -e 's/^"//' -e 's/"$//')
-                PACKAGE_VERSION=$(npm pkg get version | sed -e 's/^"//' -e 's/"$//')
-                PUBLISHED_VERSION=$(npm view $PACKAGE_NAME@beta version 2>/dev/null || echo "")
-                if [[ "$PUBLISHED_VERSION" == "$PACKAGE_VERSION"* ]]; then
-                    INDEX=$(echo $PUBLISHED_VERSION | sed -r -e 's/^[0-9]+\.[0-9]+\.[0-9]+-beta\.//' | awk '{print $0+1}')
-                else
-                    INDEX=0
-                fi
-                npm pkg set version=$PACKAGE_VERSION-beta.$INDEX
-
-          - name: Cache dependencies
-            uses: actions/cache@v4
-            with:
-                path: ~/.npm
-                key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
-                restore-keys: |
-                  ${{ runner.os }}-npm-
-
-          - name: Install dependencies
-            run: npm install
-
-          - name: Test
-            run: npm run test
-
     publish-beta:
         name: Publish beta version
-        if: github.repository_owner == 'kearisp'
-        needs: test
         runs-on: ubuntu-latest
         environment: publish
         permissions:
@@ -68,28 +26,21 @@ jobs:
             id-token: write
         steps:
           - name: Checkout code
-            uses: actions/checkout@v4
+            uses: actions/checkout@v6
 
-          - name: Set up Node.js
-            uses: actions/setup-node@v4
+          - name: Setup Node.js
+            uses: actions/setup-node@v6
             with:
-                node-version: 22
+                node-version: 24
                 registry-url: 'https://registry.npmjs.org'
 
           - name: Setup version
-            run: |
-                PACKAGE_NAME=$(npm pkg get name | sed -e 's/^"//' -e 's/"$//')
-                PACKAGE_VERSION=$(npm pkg get version | sed -e 's/^"//' -e 's/"$//')
-                PUBLISHED_VERSION=$(npm view $PACKAGE_NAME@beta version 2>/dev/null || echo "")
-                if [[ "$PUBLISHED_VERSION" == "$PACKAGE_VERSION"* ]]; then
-                    INDEX=$(echo $PUBLISHED_VERSION | sed -r -e 's/^[0-9]+\.[0-9]+\.[0-9]+-beta\.//' | awk '{print $0+1}')
-                else
-                    INDEX=0
-                fi
-                npm pkg set version=$PACKAGE_VERSION-beta.$INDEX
+            uses: kearisp/npm-version-action@v0.0.3
+            with:
+                tag: beta
 
           - name: Cache dependencies
-            uses: actions/cache@v4
+            uses: actions/cache@v5
             with:
                 path: ~/.npm
                 key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
@@ -97,10 +48,20 @@ jobs:
                   ${{ runner.os }}-npm-
 
           - name: Install dependencies
+            shell: bash
             run: npm install
 
+          - name: Test
+            uses: ./.github/actions/test
+            timeout-minutes: 2
+            with:
+                version: "beta"
+                gist_token: ${{ secrets.GIST_TOKEN }}
+                gist_id: ${{ secrets.GIST_ID }}
+
           - name: Publish Beta to NPM
+            if: github.repository_owner == 'kearisp'
+            shell: bash
             env:
                 NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-            run: |
-                npm publish --provenance --tag beta
+            run: npm publish --provenance --tag beta

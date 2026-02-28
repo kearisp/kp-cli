@@ -1,4 +1,4 @@
-name: Publish latest
+name: Latest
 
 on:
     release:
@@ -8,7 +8,6 @@ on:
 jobs:
     publish:
         name: Publish latest version
-        if: ${{ github.repository_owner == 'kearisp' }}
         runs-on: ubuntu-latest
         environment: publish
         permissions:
@@ -16,16 +15,16 @@ jobs:
             id-token: write
         steps:
           - name: Checkout code
-            uses: actions/checkout@v4
+            uses: actions/checkout@v6
 
-          - name: Set up Node.js
-            uses: actions/setup-node@v4
+          - name: Setup Node.js
+            uses: actions/setup-node@v6
             with:
-                node-version: 22
+                node-version: 24
                 registry-url: 'https://registry.npmjs.org'
 
           - name: Cache dependencies
-            uses: actions/cache@v4
+            uses: actions/cache@v5
             with:
                 path: ~/.npm
                 key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
@@ -33,12 +32,19 @@ jobs:
                     ${{ runner.os }}-npm-
 
           - name: Install dependencies
+            shell: bash
             run: npm install
 
-          - name: Build
-            run: npm run build
+          - name: Test
+            uses: ./.github/actions/test
+            with:
+                version: "latest"
+                gist_token: ${{ secrets.GIST_TOKEN }}
+                gist_id: ${{ secrets.GIST_ID }}
 
           - name: Publish to NPM
+            if: ${{ github.repository_owner == 'kearisp' }}
+            shell: bash
             env:
                 NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
             run: npm publish --provenance
@@ -51,23 +57,24 @@ jobs:
         needs: publish
         steps:
           - name: Checkout code
-            uses: actions/checkout@v4
+            uses: actions/checkout@v6
 
-          - name: Set up Node.js
-            uses: actions/setup-node@v4
+          - name: Setup Node.js
+            uses: actions/setup-node@v6
             with:
-                node-version: 22
+                node-version: 24
                 registry-url: 'https://registry.npmjs.org'
 
           - name: Unpublish previous beta versions
+            shell: bash
             env:
                 NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
             run: |
                 PACKAGE_NAME=$(npm pkg get name | sed -e 's/^"//' -e 's/"$//')
                 PACKAGE_VERSION=$(npm pkg get version | sed -e 's/^"//' -e 's/"$//')
-                BETA_VERSIONS=$(npm view $PACKAGE_NAME versions --json | jq -r '.[]' | grep -E "$PACKAGE_VERSION-beta\.[0-9]+$")
+                VERSIONS=$(npm view $PACKAGE_NAME versions --json | jq -r '.[]')
+                BETA_VERSIONS=$(echo $VERSIONS | grep -E "$PACKAGE_VERSION-beta\.[0-9]+$" || echo "")
 
                 for VERSION in $BETA_VERSIONS; do
                     npm unpublish $PACKAGE_NAME@$VERSION --force 2>/dev/null || npm deprecate $PACKAGE_NAME@$VERSION "This is the beta version. Why can't it be deleted?"
                 done
-
