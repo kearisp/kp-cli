@@ -116,4 +116,24 @@ describe("Cli.run", () => {
         expect(res).toContain("--name");
         expect(res).toContain("--option");
     });
+
+    it("Should handle empty command with options", async (): Promise<void> => {
+        const cli = new Cli();
+
+        cli.command("")
+            .option("version", {
+                alias: "v",
+                type: "boolean"
+            })
+            .action((input) => {
+                if(input.option("version")) {
+                    return "v1.0.0";
+                }
+
+                return "Some result";
+            });
+
+        expect(await cli.run(["node", "cli"]).catch((err) => err)).toBe("Some result");
+        expect(await cli.run(["node", "cli", "-v"]).catch((err) => err)).toBe("v1.0.0");
+    });
 });

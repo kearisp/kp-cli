@@ -128,16 +128,19 @@ export class Command {
     }
 
     public parse(parts: string[]): CommandInput {
-        const commands = this._command
-            ? this._command.split(/\s+/g)
-            : [];
+        const commands = [
+            "command",
+            ...this._command
+                ? this._command.trim().split(/\s+/g)
+                : []
+        ];
 
         const args: {
             [name: string]: string | boolean | number | string[];
         } = {};
         const optionValues: OptionValue[] = [];
 
-        const parser = new Parser(parts);
+        const parser = new Parser(["command", ...parts]);
 
         for(let i = 0; i < commands.length; i++) {
             const command = commands[i];
