@@ -44,12 +44,12 @@ export class Logger {
             };
 
             const date = new Date(),
-                year = date.getFullYear(),
-                month = prepareValue(date.getMonth() + 1),
-                days = prepareValue(date.getDate()),
-                hours = prepareValue(date.getHours()),
-                minutes = prepareValue(date.getMinutes()),
-                seconds = prepareValue(date.getSeconds());
+                  year = date.getFullYear(),
+                  month = prepareValue(date.getMonth() + 1),
+                  days = prepareValue(date.getDate()),
+                  hours = prepareValue(date.getHours()),
+                  minutes = prepareValue(date.getMinutes()),
+                  seconds = prepareValue(date.getSeconds());
 
             return `${year}-${month}-${days} ${hours}:${minutes}:${seconds}`;
         };

@@ -19,7 +19,6 @@
 /package-lock.json
 /tsconfig.json
 /tsconfig.build.json
-/.babelrc.js
 /jest.config.ts
 
 # Dependency directories
@@ -30,3 +29,5 @@ jspm_packages/
 
 # Development tools
 /.github
+/.junie
+/.aiassistant

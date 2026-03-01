@@ -1,17 +1,19 @@
-import {expect, describe, it, beforeEach} from "@jest/globals";
+import {expect, describe, it, beforeEach, afterEach} from "@jest/globals";
 import * as OS from "os";
-// import * as assert from "assert";
-
-import {Logger} from "..";
-import {Cli} from "..";
+import {Cli, Logger} from "..";
 
 
-describe("Cli.run", () => {
-    beforeEach(() => {
+describe("Cli.run", (): void => {
+    beforeEach((): void => {
         Logger.mute();
     });
 
-    it("Should be processed simple command", async (): Promise<void> => {
+    afterEach((): void => {
+        Logger.debug("-".repeat(10));
+        Logger.mute();
+    });
+
+    it("should be processed simple command", async (): Promise<void> => {
         const cli = new Cli();
 
         cli.command("completion")
@@ -24,7 +26,7 @@ describe("Cli.run", () => {
         expect(await cli.run(["node", "cli", "init"])).toBe("Init");
     });
 
-    it("Should be processed command with argument", async (): Promise<void> => {
+    it("should be processed command with argument", async (): Promise<void> => {
         const cli = new Cli();
 
         cli.command("process <name>")
@@ -37,7 +39,7 @@ describe("Cli.run", () => {
         expect(res).toBe("process-name");
     });
 
-    it("Should be processed with option", async (): Promise<void> => {
+    it("should be processed with option", async (): Promise<void> => {
         const cli = new Cli();
 
         cli.command("process")
@@ -55,7 +57,7 @@ describe("Cli.run", () => {
         expect(await cli.run(["node", "cli", "process", "-n", "test"])).toBe("test");
     });
 
-    it("Should be completed", async (): Promise<void> => {
+    it("should be completed", async (): Promise<void> => {
         const cli = new Cli();
 
         cli.command("init");
@@ -86,7 +88,7 @@ describe("Cli.run", () => {
             .toEqual("");
     });
 
-    it("Should be help", async (): Promise<void> => {
+    it("should be help", async (): Promise<void> => {
         const cli = new Cli();
 
         cli.command("completion").action(() => {
@@ -117,7 +119,23 @@ describe("Cli.run", () => {
         expect(res).toContain("--option");
     });
 
-    it("Should handle empty command with options", async (): Promise<void> => {
+    it("should be help without required argument", async (): Promise<void> => {
+        Logger.unmute();
+
+        const cli = new Cli();
+
+        cli.command("run <action>")
+            .help({
+                description: "Run description"
+            });
+
+        const res = await cli.run(["node", "cli", "run", "-h"]);
+
+        expect(res).toContain("Run description");
+        expect(res).toContain("run <action>");
+    });
+
+    it("should handle empty command with options", async (): Promise<void> => {
         const cli = new Cli();
 
         cli.command("")
